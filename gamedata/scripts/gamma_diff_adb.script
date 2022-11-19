@@ -75,7 +75,7 @@ function damage_math(shit, scale, total_prot, af_prot, bo_prot)
 	local dm = 0
 
 	if adb_classic == 1 then
-		dm = (shit.power * scale) * (1 - (total_prot + af_prot + bo_prot)))
+		dm = (shit.power * scale) * (1 - (total_prot + af_prot + bo_prot))
 		trace('Damage: %s >> (%s x %s) x (1.0 - (%s + %s + %s + %s))', dm, shit.power, sc, tp, ap, bp)
 		return dm
 	else
