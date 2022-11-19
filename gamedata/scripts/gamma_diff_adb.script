@@ -63,6 +63,30 @@ function get_cond(slot)
 	return 1.0
 end
 
+local adb_classic = false
+function damage_math(shit, scale, total_prot, af_prot, bo_prot)
+	
+	if shit.power <= 0 then return end
+
+	local sc = scale and scale or 1
+	local tp = total_prot and total_prot or 0
+	local ap = af_prot and af_prot or 0
+	local bp = bo_prot and bo_prot or 0
+	local dm = 0
+
+	if adb_classic == 1 then
+		dm = (shit.power * scale) * (1 - (total_prot + af_prot + bo_prot)))
+		trace('Damage: %s >> (%s x %s) x (1.0 - (%s + %s + %s + %s))', dm, shit.power, sc, tp, ap, bp)
+		return dm
+	else
+		dm = (shit.power * scale) * (1 - total_prot) * (1 - af_prot) * (1 - bo_prot)
+		trace('Damage: %s >> (%s x %s) x (1.0 - %s) x (1.0 - %s) x (1.0 - %s)', dm, shit.power, sc, tp, ap, bp)
+		return dm
+	end
+
+	return 0
+end
+
 local zone_last = {}
 local zone_field_last = {}
 local hit_last = {}
@@ -157,7 +181,7 @@ function get_protection(shit, bone_id, k_ap)
 		booster_type_def	= tonumber(ini_adb:r_string_ex(get_adb, "booster_type_def"))
 		adjuster			= max(smallest, tonumber(ini_adb:r_string_ex(get_adb, "adjuster")))
 		limiter				= clamp(tonumber(ini_adb:r_string_ex(get_adb, "limiter")), smallest, 1.0)
-		absorb				= tonumber(ini_adb:r_string_ex(get_adb, "absorb"))
+		absorb				= max(tonumber(ini_adb:r_string_ex(get_adb, "absorb")), (-1 + smallest))
 		bleed				= max(tonumber(ini_adb:r_string_ex(get_adb, "bleed")), 0)
 		scale				= max(tonumber(ini_adb:r_string_ex(get_adb, "scale")), smallest)
 		arti				= max(tonumber(ini_adb:r_string_ex(get_adb, "arti")), 0)
@@ -371,9 +395,8 @@ function shit_booster(shit, bone_id, k_ap)
 	degrade_math = (damage * (0.07 * (1.0 + absorb))) * settings.armor_dur_ac
 	degrade_math = degrade_math * degrade_multiplier[game_num]
 
-	damage = damage * (1 - af_prot) * (1 - bo_prot)
-	
-	trace('Damage: %s >> (%s x %s) x (1.0 - %s) x (1.0 - %s) x (1.0 - %s)', damage, shit.power, scale, total_prot, af_prot, bo_prot)
+	--damage = damage * (1 - af_prot) * (1 - bo_prot)
+	damage_math(shit, scale, total_prot, af_prot, bo_prot)
 
 	if fall_damage == 1 then
 		degrade_math = 0

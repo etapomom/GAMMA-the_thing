@@ -28,7 +28,7 @@ local function load_settings()
 end
 
 local function trace(str, ...)
-	if not settings.debug then
+	if settings.debug then
 		printf("[G.A.M.M.A. THE THING] PSY: " .. str, ...)
 	end
 end
@@ -121,15 +121,12 @@ function actor_on_before_hit(shit)
 		shit.power = shit.power * 0.5
 	end
 
-	damage = (shit.power * scale) * (1 - total_prot) * (1 - af_prot) * (1 - bo_prot) --* psy_helm
-	trace('Final damage: %s >> (%s x %s) x (1 - %s) x (1 - %s) x (1 - %s)', damage, shit.power, scale, total_prot, af_prot, bo_prot, psy_helm)
+	damage = adb.damage_math(shit, scale, total_prot, af_prot, bo_prot) or 0
 	
 	old_psy = get_psy_health()
 	change_psy_health(-damage)
 	new_psy = get_psy_health()
-
-	--trace('Psy before: %s // Psy now: %s // Should be: %s >> (%s - %s)', old_psy, new_psy, (old_psy - damage), old_psy, damage)
-
+	
 	shit.power = 0
 	return
 end
@@ -137,4 +134,6 @@ end
 function on_game_start()
 	RegisterScriptCallback("actor_on_before_hit", actor_on_before_hit)
 	RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
+	RegisterScriptCallback("on_option_change", load_settings)
+	RegisterScriptCallback("actor_on_first_update", load_settings)
 end
