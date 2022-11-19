@@ -1,0 +1,90 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;																		;;
+;; 			=============================================				;;
+;; 			=		 G.A.M.M.A. THE THING UPDATE 		=				;;
+;;			=			  PARTICLES MODULE   			=				;;
+;; 			=============================================				;;
+;;																		;;
+;; Define your own feedback particle effects here.						;;
+;; 		(Or be based and DLTX your effects file)						;;
+;;																		;;
+;; - Supports layered effects. Up to 10 layers.							;;
+;; - Pick random effects separated by commas in the same layer.			;;
+;; - If the script can't load the particles it won't crash.				;;
+;;																		;;
+;; NAMING CONVENTION:													;;
+;; [pfx_stalker_(npc section)] for character specific particles.		;;
+;; [pfx_monster_(monster section)] same but for monsters.				;;
+;; [pfx_faction_(faction name)] for faction specific particles.			;;
+;;																		;;
+;; EXTRA DOCUMENTATION:													;;
+;; - align: Makes the effect face the actor.							;;
+;; - ignore_bone: Makes the effect appear at the victim's feet.			;;
+;;																		;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[pfx_stalker_monolith_eidolon]
+layer_1		= anomaly2\gravi_anomaly_shield_00
+
+[pfx_stalker_sim_default_phantom_1]
+layer_1		= anomaly2\anomaly_entrance
+align		= 1
+
+[pfx_stalker_sim_default_phantom_2]:pfx_stalker_sim_default_phantom_1
+[pfx_stalker_sim_default_phantom_3]:pfx_stalker_sim_default_phantom_1
+
+[pfx_stalker_kat_greh_sabaoth]
+layer_1		= anomaly2\electra_entrance_small
+
+[pfx_stalker_gen_greh_sabaoth]:pfx_stalker_kat_greh_sabaoth
+[pfx_stalker_sar_greh_sabaoth]:pfx_stalker_kat_greh_sabaoth
+[pfx_stalker_lab_greh_sabaoth]:pfx_stalker_kat_greh_sabaoth
+[pfx_stalker_greh_castigator_1]:pfx_stalker_kat_greh_sabaoth
+[pfx_stalker_greh_castigator_2]:pfx_stalker_greh_castigator_1
+[pfx_stalker_greh_castigator_3]:pfx_stalker_greh_castigator_1
+[pfx_stalker_greh_castigator_4]:pfx_stalker_greh_castigator_1
+[pfx_stalker_greh_castigator_5]:pfx_stalker_greh_castigator_1
+[pfx_stalker_greh_castigator_6]:pfx_stalker_greh_castigator_1
+[pfx_stalker_greh_castigator_7]:pfx_stalker_greh_castigator_1
+
+;;;;;;;;;;
+;; LTTZ DC
+[pfx_stalker_x18_dark_presence]
+layer_1		= explosions\effects\expl_hd_handgrenade_05
+align		= 1
+
+[pfx_stalker_stalker_stitch_zombied]
+layer_1		= monsters\effects\phantom_birth_01
+align		= true
+
+[pfx_stalker_stalker_rogue_monolith]:pfx_stalker_stalker_stitch_zombied
+[pfx_stalker_stalker_strelok_dark]:pfx_stalker_stalker_stitch_zombied
+[pfx_stalker_army_degtyarev_dark]:pfx_stalker_stalker_stitch_zombied
+
+[pfx_stalker_monolith_eidolon_ghost]:pfx_stalker_monolith_eidolon
+layer_2		= monsters\effects\phantom_birth_01
+
+[pfx_stalker_greh_sabaoth_ghost]:pfx_stalker_kat_greh_sabaoth
+layer_2		= monsters\effects\phantom_birth_01
+;;
+;;;;;;;;;
+
+
+[pfx_faction_greh]
+layer_1		= monsters\effects\bloodsucker_trail
+layer_2		= monsters\effects\polter_trails_02
+layer_3		= anomaly2\effects\bloodsucker_shleyf
+
+
+;; These are hardcoded and not dynamically read by the script.
+[pfx_armor]	;; << When the bullet doesn't penetrate the armor
+layer_1		= hit_fx\hit_metal_00, hit_fx\hit_metal_01, hit_fx\hit_metal_02, hit_fx\hit_metal_03
+align		= 1
+
+[pfx_flesh]	;; << When the bullet penetrates the armor
+layer_1		= anomaly2\effects\gravity_damage_02_blood2
+align		= 1
+
+[pfx_gibs]	;; << When you deal excessive amounts of damage
+layer_1		= anomaly2\body_tear_00, anomaly2\body_tear_01, anomaly2\body_tear_02
+ignore_bone	= 1

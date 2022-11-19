@@ -1,0 +1,183 @@
+ini_particles	= ini_file_ex("plugins\\gamma_particles.ltx")
+
+-- Monkey patch PBA out of the math
+PBA_m_before_hit	= perk_based_artefacts.monster_on_before_hit
+PBA_n_before_hit	= perk_based_artefacts.npc_on_before_hit
+
+function perk_based_artefacts.npc_on_before_hit(npc, s_hit, bone_id, flags)
+end
+
+function perk_based_artefacts.monster_on_before_hit(monster, s_hit, bone_id)
+end
+
+-- Lifted from PBA, I'm sorry demonized
+function get_random_array_element(t)
+	return t[math.random(#t)]
+end
+
+local function load_defaults()
+	local t = {}
+	local op = gamma_diff_mcm.op
+	for i, v in ipairs(op.gr) do
+		if v.def ~= nil then
+			t[v.id] = v.def
+		end
+	end
+	return t
+end
+
+local settings = load_defaults()
+
+local function trace(str, ...)
+	if settings.debug then
+		printf("[G.A.M.M.A. THE THING]: UTILS >>> " .. str, ...)
+	end
+end
+
+local function load_settings()
+	settings = load_defaults()
+	if ui_mcm then
+		for k, v in pairs(settings) do
+			settings[k] = ui_mcm.get("gamma_diff/" .. k)
+		end
+	end
+end
+
+-- Particles!
+function FX_Play(fx, who, shit, where)
+	
+	if not settings.particles then
+		trace("particles disabled!")
+		return
+	end
+	
+	local pfx_check = nil
+	local pfx_eff	= nil
+	local pfx_table = {}
+	local pfx_args1	= 0
+	local pfx_args2	= 0
+	local gibs		= nil
+	local dir		= shit.direction
+	local dist		= (who:bone_position(where)):distance_to(shit.draftsman:position())
+	local where		= who:bone_position(where)
+	local camdir	= device().cam_pos:add(device().cam_dir:mul(dist))
+	
+	for a = 1, 10, 1 do
+		pfx_check = ini_particles:r_string_ex(fx, "layer_" .. a)
+		if pfx_check == nil then
+			trace("! [" .. fx .. "]: [layer_" .. a .. "] doesn't exist, exiting loop.")
+			break
+		end
+		
+		trace("- [" .. fx .. "]: [layer_" .. a .. "] has data, processing.")
+		
+		pfx_eff = str_explode(pfx_check, ",")
+		for i = 1, #pfx_eff do
+			pfx_table[#pfx_table + 1] = pfx_eff[i]
+		end
+		
+		gibs 	= particles_object(get_random_array_element(pfx_table))
+		
+		pfx_args1 = ini_particles:r_string_ex(pfx_check, "align") or 0
+		pfx_args2 = ini_particles:r_string_ex(pfx_check, "ignore_bone") or 0
+		
+		if gibs then
+			
+			dir.x = (dir.x * -1.0) 	+ math.random(-0.036,	0.036)
+			dir.y = dir.y 			+ math.random(-0.018, 	0.018)
+			dir.z = (dir.z * -1.0) 	+ math.random(-0.036, 	0.036)
+			
+			gibs:set_direction(dir)
+			
+			if pfx_args2 == 1 then
+				gibs:play_at_pos(who:position())
+			else
+				where.x = where.x + (camdir.x * -0.0005)
+				where.z = where.z + (camdir.z * -0.0005)
+				gibs:play_at_pos(where)
+			end
+		else
+			trace("!!! " .. gibs .. " pfx doesn't exist! skipped.")
+		end
+	end
+end
+
+function get_Barrel(wpn)
+	if (IsWeapon(wpn) and (not IsItem("fake_ammo_wpn",wpn:section()))) or (wpn:parent() and wpn:parent():id() ~= 0) then
+		barrel_condition = nil
+		local parts = se_load_var(wpn:id(), wpn:name(), "parts")
+		if parts ~= nil then
+			for k,v in pairs(parts) do
+				if string.find(k, "barrel") then
+					barrel_condition = v / 100
+				end
+			end
+
+			if barrel_condition == nil then
+				barrel_condition = 1
+			end
+		else
+			barrel_condition = 1
+		end
+
+		barrel_condition_corrected = ( 130 - ( 1.12 * barrel_condition ) ) * ( barrel_condition * 1.12 ) / 100
+
+		if barrel_condition_corrected > 1 then
+			barrel_condition_corrected = 1
+		end
+	else
+		barrel_condition = 1
+		barrel_condition_corrected = 1
+	end
+	
+	return barrel_condition_corrected
+end
+
+-- Buff the shit out of the Thistle to accomodate PBA kicking off AFTER damage reductions
+pba = perk_based_artefacts
+pba.artefact_props.af_repei =
+{
+	effect_time = 7,
+	bleed_coeff = 0.0035, -- Bigger number => bigger bleeding damage
+	hit_coeff = 0.5,
+	on_before_hit = function(self, actor, artefact_count, artefact_ids, artefact_names, npc, s_hit, bone_id, flags)
+		local hit_k = self.hit_coeff
+		local bleeding_hit = s_hit.power * -self.bleed_coeff * artefact_count
+		s_hit.power = s_hit.power * hit_k
+		
+		pba.add_simple_timed_effect(self.effect_time, function()
+			if not npc:alive() then return end
+			npc:change_health(bleeding_hit)
+			--pba.trace("Thistle, npc health %s", npc.health)
+		end)
+	end,
+	on_hit = function(self, actor, artefact_count, artefact_ids, artefact_names, npc, amount, local_direction, who, bone_index, last_npc_hit)
+		pba.add_simple_timed_effect(self.effect_time, function()
+			if not npc:alive() then return end
+			if npc.health > 0 then
+				CreateTimeEvent("af_thistle_hud", "af_thistle_hud", 0, function()
+					ui_enemy_health.on_hit(npc, nil, local_direction, who, bone_index)
+					return true
+				end)
+			end
+		end, nil, "af_thistle_hud")
+	end
+}
+
+-- From the later GBOOBS updates
+function play_sound(snd, volume, npc)
+	if not snd then
+		return
+	end
+	local npc
+	local snd = xr_sound.get_safe_sound_object(snd)
+	if snd then
+		snd:play(npc, 0, sound_object.s2d)
+		snd.volume = volume or 1
+		return snd
+	end
+end
+
+function on_game_start()
+	RegisterScriptCallback("on_option_change", load_settings)
+end

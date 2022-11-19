@@ -1,0 +1,236 @@
+presets = {
+	-- I'm too young to die
+	[0] = {
+		-- NPC OPTIONS
+		isg_res			= 0.85,		-- AP Power reduction when hitting UNISG stalkers 	>> 0.3	~	1.0
+		sin_res			= 0.5,		-- Raw damage reduction for Sin stalkers 			>> 0.15	~	1.0
+		armor_dur		= 0.8,		-- NPC Armor durability								>> 0.8	~	1.25
+		armor_inf		= 1.0,		-- NPC Armor influence on damage					>> 0.5	~	1.0
+		knife_mul		= 1.25,		-- Bonus knife damage
+		npc_hp			= 0.8,		-- NPC damage scaler
+		
+		-- MUTANT OPTIONS
+		mutant_armor_tg	= "false",	-- Mutant armor toggle
+		mutant_armor	= 0.0,		-- Reduces non-criticals by this amount and boost critical by the same amount
+		mutant_hp		= 0.8,		-- Mutant damage scaler
+		knife_mul_mt	= 1.2,		-- Mutant knife vulnerability
+		
+		-- PLAYER OPTIONS
+		actor_hp		= 0.6,		-- Damage multiplier for the actor
+		armor_dur_ac	= 1.2,		-- Durability boost for armor degradation
+		health_gate		= "true",	-- Resolve toggle
+		health_gate_hp	= 0.5,		-- Resolve threshold
+		bleed_stop		= 0.0,		-- Damage % to apply as bleed when armor catches the bullet
+		bleed_pen		= 0.5,		-- Same but for penetration
+		vulnerable		= "false",	-- Arms/Legs have 20% less armor but are 10% more durable
+		
+		--[[
+		-- RECOIL OPTIONS
+		walk_mul		= 1.0,
+		run_mul			= 1.15,
+		sprint_mul		= 2.0,
+		crouch_mul		= 0.85,
+		prone_mul		= 0.5,		-- base recoil * (move
+		--]]
+	},
+	
+	-- Hey, Not Too Rough!
+	[1] = {
+		isg_res			= 0.7,
+		sin_res			= 0.25,
+		armor_dur		= 0.95,
+		armor_inf		= 1.0,
+		knife_mul		= 1.05,
+		npc_hp			= 0.9,
+		mutant_armor_tg	= "false",
+		mutant_armor	= 0.0,
+		mutant_hp		= 0.9,
+		knife_mul_mt	= 1.1,
+		actor_hp		= 0.8,
+		armor_dur_ac	= 1.05,
+		health_gate		= "true",
+		health_gate_hp	= 0.55,
+		bleed_stop		= 0.0,
+		bleed_pen		= 0.85,
+		vulnerable		= "false",
+	},
+	
+	-- Hurt me Plenty
+	[2] = {
+		isg_res			= 0.6,
+		sin_res			= 0.15,
+		armor_dur		= 1.0,
+		armor_inf		= 1.0,
+		knife_mul		= 1.0,
+		npc_hp			= 1.0,
+		mutant_armor_tg	= "false",
+		mutant_armor	= 0.0,
+		mutant_hp		= 1.0,
+		knife_mul_mt	= 1.0,
+		actor_hp		= 1.0,
+		armor_dur_ac	= 1.0,
+		health_gate		= "true",
+		health_gate_hp	= 0.6,
+		bleed_stop		= 0.0,
+		bleed_pen		= 1.0,
+		vulnerable		= "false",
+	},
+	
+	-- Ultra-Violence
+	[3] = {
+		isg_res			= 0.5,
+		sin_res			= 0.1,
+		armor_dur		= 1.15,
+		armor_inf		= 1.0,
+		knife_mul		= 0.95,
+		npc_hp			= 1.0,
+		mutant_armor_tg	= "true",
+		mutant_armor	= 0.1,
+		mutant_hp		= 1.0,
+		knife_mul_mt	= 0.9,
+		actor_hp		= 1.1,
+		armor_dur_ac	= 0.9,
+		health_gate		= "true",
+		health_gate_hp	= 0.65,
+		bleed_stop		= 0.125,
+		bleed_pen		= 1.0,
+		vulnerable		= "true",
+	},
+	
+	-- Nightmare!
+	[4] = {
+		isg_res			= 0.25,
+		sin_res			= 0.05,
+		armor_dur		= 1.25,
+		armor_inf		= 1.0,
+		knife_mul		= 0.8,
+		npc_hp			= 1.2,
+		mutant_armor_tg	= "true",
+		mutant_armor	= 0.25,
+		mutant_hp		= 1.2,
+		knife_mul_mt	= 0.8,
+		actor_hp		= 1.2,
+		armor_dur_ac	= 0.85,
+		health_gate		= "false",
+		health_gate_hp	= 1.0,
+		bleed_stop		= 0.25,
+		bleed_pen		= 1.5,
+		vulnerable		= "true",
+	},
+}
+
+op_id = "gamma_diff"
+op_preset_id = "presets"
+
+op = { 
+	id = "gamma_diff", sh = true, gr = {
+	
+		{ id = op_preset_id, type = "list", val = 2, def = 2, content = {
+				{ 0, "gamma_baby"		},
+				{ 1, "gamma_easy"		},
+				{ 2, "gamma_normal"		},
+				{ 3, "gamma_hard"		},
+				{ 4, "gamma_nightmare" 	},
+			}
+		},
+		
+		{ id = "particles",	type = "check", val = 1, def = true		},
+		{ id = "gibs",		type = "check", val = 1, def = true		},
+		{ id = "debug",		type = "check", val = 1, def = false 	},
+		
+		{ id = "divider", 			type = "line" },
+		{ id = "divider", 			type = "line" },
+		{ id = "gamma_npc_title", type = "slide", text = "ui_mcm_gamma_diff_npc", link = "ui_options_slider_disguise", size = { 512, 50 }, spacing = 20 },
+				
+		{ id = "isg_res",	type = "track", val = 2, min = 0.2, 	max = 1.0, 	step = 0.05, 	def = presets[2].isg_res or 0.6 	},
+		{ id = "sin_res", 	type = "track", val = 2, min = 0.05, 	max = 1.0, 	step = 0.05, 	def = presets[2].sin_res or 0.15	},
+		{ id = "armor_dur",	type = "track", val = 2, min = 0.5, 	max = 1.5, step = 0.025, 	def = presets[2].armor_dur or 1.0 	},
+		{ id = "armor_inf", type = "track", val = 2, min = 0.25,	max = 1.0,	step = 0.05,	def = presets[2].armor_inf or 1.0	},
+		{ id = "knife_mul",	type = "track", val = 2, min = 0.75,	max = 1.25, step = 0.05, 	def = presets[2].knife_mul or 1.0	},
+		{ id = "npc_hp",	type = "track", val = 2, min = 0.5,		max = 1.5,	step = 0.025,	def = presets[2].npc_hp or 1.0		},
+		
+		{ id = "gamma_mutant_title", type = "slide", text = "ui_mcm_gamma_diff_mutant", link = "ui_options_slider_emission", size = { 512, 50 }, spacing = 20 },
+		
+		{ id = "mutant_armor_tg",	type = "check", val = 1, def = presets[2].mutant_armor_tg or false },
+		{ id = "mutant_armor",		type = "track", val = 2, min = 0.0, max = 0.5,	step = 0.025, def = presets[2].mutant_armor or 0.0 	},
+		{ id = "mutant_hp",			type = "track", val = 2, min = 0.5, max = 1.5, 	step = 0.025, def = presets[2].mutant_hp or 1.0 	},
+		{ id = "knife_mul_mt",		type = "track", val = 2, min = 0.75,max = 1.25, step = 0.025, def = presets[2].knife_mul_mt or 1.0 	},
+		
+		{ id = "gamma_actor_title", type = "slide", text = "ui_mcm_gamma_diff_actor", link = "ui_options_slider_mask", size = { 512, 50 }, spacing = 20 },
+		
+		{ id = "actor_hp",			type = "track", val = 2, min = 0.5,		max = 1.5,	step = 0.025,	def = presets[2].actor_hp or 1.0		},
+		{ id = "armor_dur_ac",		type = "track", val = 2, min = 0.75, 	max = 1.25, step = 0.025, 	def = presets[2].armor_dur_ac or 1.0	},
+		{ id = "health_gate",		type = "check", val = 1, def = presets[2].health_gate or true },
+		{ id = "health_gate_hp",	type = "track", val = 2, min = 0.5, 	max = 0.65, step = 0.025, 	def = presets[2].health_gate_hp or 0.65 },
+		{ id = "bleed_stop",		type = "track", val = 2, min = 0.0,		max = 0.25, step = 0.025, 	def = presets[2].bleed_stop or 0.0		},
+		{ id = "bleed_pen",			type = "track", val = 2, min = 0.5,		max = 1.5,	step = 0.05,	def = presets[2].bleed_pen or 1.0		},
+		{ id = "vulnerable",		type = "check", val = 1, def = presets[2].vulnerable or false },
+	}
+}
+
+function on_mcm_load()
+    return op
+end
+
+function set_preset(self, p)
+    if not presets[p] then
+        printf("DRX DA preset %s not found", p)
+        return
+    end
+
+    -- Pre-build available MCM values
+    local t = {}
+    for _, v in ipairs(op.gr) do
+        if v.def ~= nil then
+            t[v.id] = v.def
+        end
+    end
+
+    for k, value in pairs(presets[p]) do
+        if t[k] then
+        
+            -- Validate option
+            local v = ui_mcm.get_opt_table(op_id .. "/" .. k)
+            if v and v.type then
+
+                -- Get proper value
+                if v.val == 0 then
+                    -- Pass input value as is
+                elseif v.val == 1 then
+                    value = (value == "true") and true or false
+                elseif v.val == 2 then
+                    value = clamp(tonumber(value), v.min or 0, v.max or 100)
+                end
+                
+                -- Extract path and opt
+                local t = ui_mcm.str_opt_explode(op_id .. "/" .. k)
+                local opt = t[#t]
+                local path = t[1]
+                for i=2,#t-1 do
+                    path = ui_mcm.cc(path , t[i])
+                end
+                
+                -- Cache changes
+                self:CacheValue(path, opt, value, v)
+            end
+        end
+    end
+
+    -- Update XML elements
+    self:Reset_opt(self.last_curr_tree, self.last_path)
+    
+    -- Update state
+    self:UpdatePending()
+end
+
+if ui_mcm and ui_mcm.UIMCM and ui_mcm.UIMCM.Callback_List then
+    MCM_Callback_List = ui_mcm.UIMCM.Callback_List
+    ui_mcm.UIMCM.Callback_List = function(self, ctrl, path, opt, v)
+        MCM_Callback_List(self, ctrl, path, opt, v)
+        if path ~= op_id then return end
+        if opt == op_preset_id then
+            local value = self:GetValue(path, opt, v)
+            set_preset(self, value)
+        end
+    end
+end

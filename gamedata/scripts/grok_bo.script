@@ -1,0 +1,14 @@
+--[[
+--
+-- Sure feels cold around here...
+--
+-- CHECK >> gamma_diff_bo_stalkers.script FOR THE STALKERS SIDE OF grok_bo.script
+-- CHECK >> gamma_diff_bo_monsters.script FOR THE MONSTERS SIDE OF grok_bo.script
+--
+-- Overwriting this without disabling both of those will make all the damage math happen twice, maybe.
+-- Or maybe even crash, I don't know, X-Ray is unpredictable.
+--
+-- Take a look inside the plugins folder if you want to add new calibers or want to touch up
+-- monsters' resistances to specific ammo and the like.
+--
+--]]

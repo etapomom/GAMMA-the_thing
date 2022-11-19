@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<string_table>
+	
+	<string id = "ui_mcm_menu_gamma_diff">			<text>G.A.M.M.A. Difficulty</text>	</string>
+	<string id = "ui_mcm_gamma_diff_title">			<text>G.A.M.M.A. Difficulty</text>	</string>
+	
+	<string id = "ui_mcm_gamma_diff_presets"> <text>Difficulty preset</text> </string>
+		<string id = "ui_mcm_gamma_diff_presets_desc"> 
+			<text>G.A.M.M.A. default is: Lightly broiled</text> 
+		</string>
+		<string id = "ui_mcm_lst_gamma_baby"> 		<text>Still kicking</text> 		</string>
+		<string id = "ui_mcm_lst_gamma_easy"> 		<text>Pink on the inside</text> </string>
+		<string id = "ui_mcm_lst_gamma_normal"> 	<text>Lightly broiled</text> 	</string>
+		<string id = "ui_mcm_lst_gamma_hard"> 		<text>Well done</text> 			</string>
+		<string id = "ui_mcm_lst_gamma_nightmare"> 	<text>Extra crispy!</text> 		</string>
+	
+	<string id = "ui_mcm_gamma_diff_particles"> 			<text>Enable particles</text>		</string>
+	<string id = "ui_mcm_gamma_diff_particles_desc">
+		<text>
+		Particles provide better feedback on how is your damage being influenced but can also tank your frames.
+		</text>
+	</string>
+	
+	<string id = "ui_mcm_gamma_diff_debug">					<text>Debug mode</text>				</string>
+	<string id = "ui_mcm_gamma_diff_debug_desc">
+		<text>
+		Logs developer related stuff into the console.
+		</text>
+	</string>
+	
+	<string id = "ui_mcm_gamma_diff_gibs">					<text>Ludicrous Gibs</text>		</string>
+	<string id = "ui_mcm_gamma_diff_gibs_desc">
+		<text>
+		Deal excessive amounts of damage to your enemies and they'll EXPLODE in gorey chunks!
+		\n%c[pda_yellow]REQUIRES PARTICLES TO BE ENABLED.
+		</text>
+	</string>
+	
+	<string id = "ui_mcm_gamma_diff_npc"> <text>NPC Options</text> </string>
+		<string id = "ui_mcm_gamma_diff_isg_res">			<text>UNISG Armor pen. resistance</text> 	</string>
+		<string id = "ui_mcm_gamma_diff_isg_res_desc">
+			<text>Scales how much UNISG members resist bullets' BR level. \n
+			\n%c[pda_yellow]Lower means you'll need better ammo to punch through.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_sin_res">			<text>Sin damage multiplier</text>	</string>
+		<string id = "ui_mcm_gamma_diff_sin_res_desc">
+			<text>Scales how much Sin members resist all incoming damage. \n
+			\n%c[pda_yellow]UNISG members have 5x this value, capping at 1.0.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_armor_dur">			<text>Armor durability</text>		</string>
+		<string id = "ui_mcm_gamma_diff_armor_dur_desc">
+			<text>Determines how much damage can NPCs' armor take before breaking.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_armor_inf">			<text>Residual damage multiplier</text>		</string>
+		<string id = "ui_mcm_gamma_diff_armor_inf_desc">
+			<text>Determines how much residual damage is taken by NPCs when their armor catches the bullet. \n
+			\n%c[pda_yellow]Lower means higher damage.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_knife_mul">			<text>Melee weakness</text>			</string>
+		<string id = "ui_mcm_gamma_diff_knife_mul_desc">
+			<text>Scales NPCs' received melee damage.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_npc_hp">			<text>NPC health multiplier</text>	</string>
+	
+	<string id = "ui_mcm_gamma_diff_mutant"> <text>Mutant Options</text> </string>
+		<string id = "ui_mcm_gamma_diff_mutant_armor_tg">	<text>Enable mutants armor</text>	</string>
+		<string id = "ui_mcm_gamma_diff_mutant_armor">		<text>Mutant armor</text>			</string>
+		<string id = "ui_mcm_gamma_diff_mutant_armor_desc">
+			<text>Reduces NON CRITICAL hits' damage by this scale and boosts CRITICAL hits' damage by this scale.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_mutant_hp">			<text>Mutant health multiplier</text></string>
+		<string id = "ui_mcm_gamma_diff_knife_mul_mt">		<text>Melee weakness</text>			</string>
+		<string id = "ui_mcm_gamma_diff_knife_mul_mt_desc">
+			<text>Same as the scaler for NPCs but now for monsters.</text>
+		</string>
+	
+	<string id = "ui_mcm_gamma_diff_actor"> <text>Player options</text> </string>
+		<string id = "ui_mcm_gamma_diff_actor_hp">			<text>Incoming damage multiplier</text></string>
+		<string id = "ui_mcm_gamma_diff_armor_dur_ac">		<text>Armor durability</text>	</string>
+		<string id = "ui_mcm_gamma_diff_armor_dur_ac_desc">
+			<text>Scales how fast armor degrades from damage.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_health_gate">		<text>Enable health gating</text>	</string>
+		<string id = "ui_mcm_gamma_diff_health_gate_desc">
+			<text>Health gating prevents you from being one-shotted. \n
+			\n%c[0, 125, 175, 200]DOESN'T protect you from taking too much damage to either your head or torso.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_health_gate_hp">	<text>Health gate threshold</text>	</string>
+		<string id = "ui_mcm_gamma_diff_health_gate_hp_desc">
+			<text>How much health is needed to be protected from one-shots.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_bleed_stop">		<text>Catch bleed</text>			</string>
+		<string id = "ui_mcm_gamma_diff_bleed_stop_desc">
+			<text>How much bleeding is inflicted when your armor CATCHES the bullet.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_bleed_pen">			<text>Penetration bleed</text>		</string>
+		<string id = "ui_mcm_gamma_diff_bleed_pen_desc">
+			<text>How much bleeding is inflicted when the bullet PENETRATES your armor.</text>
+		</string>
+		<string id = "ui_mcm_gamma_diff_vulnerable">		<text>Vulnerable limbs</text>		</string>
+		<string id = "ui_mcm_gamma_diff_vulnerable_desc">
+			<text>
+			%c[pda_yellow]On legs hit: %c[ui_gray_1] \n
+			• Plates won't apply their extra BR values. \n
+			• Armor will degrade 15% slower. \n
+			• You'll take 15% more damage. \n
+			\n%c[pda_yellow]On arms hit: %c[ui_gray_1] \n
+			• Plates will apply only 50% of their extra BR values. \n
+			• Armor will degrade 5% slower. \n
+			• You'll take 5% more damage.
+			</text>
+		</string>
+	
+</string_table>

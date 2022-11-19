@@ -1,0 +1,52 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;		 G.A.M.M.A. THE THING UPDATE		;;
+;;			  STALKERS PLUGIN				;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;											;;
+;; [gbo_(stalker section]					;;
+;; armor = (float number)					;;
+;; spec_armor = (float number)				;;
+;; dmg_reduction = 0.0 <= float < 1.0 		;;
+;;											;;
+;; (spec_armor) is the old custom_bone_value;;
+;; from GBOOBS, used only for Eidolon in	;;
+;; the original script. Here you can define	;;
+;; that value for other characters.			;;
+;;											;;
+;; NOTE: This IGNORES MCM defined options	;;
+;; such as UNISG AP Reduction.				;;
+;;											;;
+;; (armor) is a multiplier for base armor	;;
+;; durability. 								;;
+;;											;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_monolith_eidolon]
+spec_armor		= 8.0
+dmg_reduction	= 0.2
+
+[gbo_greh_squad_leader]
+armor			= 2.0
+dmg_reduction	= 0.15
+
+[gbo_greh_castigator_1]:gbo_greh_squad_leader
+[gbo_greh_castigator_2]:gbo_greh_squad_leader
+[gbo_greh_castigator_3]:gbo_greh_squad_leader
+[gbo_greh_castigator_4]:gbo_greh_squad_leader
+
+[gbo_greh_castigator_5]
+armor			= 4.0
+dmg_reduction	= 0.5
+
+[gbo_greh_castigator_6]:gbo_greh_castigator_5
+[gbo_kat_greh_sabaoth]:gbo_greh_castigator_5
+[gbo_lab_greh_sabaoth]:gbo_greh_castigator_5
+[gbo_sar_greh_sabaoth]:gbo_greh_castigator_5
+
+[gbo_monolith_eidolon_ghost]:gbo_monolith_eidolon		;; LTTZ DC
+armor			= 2.0
+dmg_reduction	= 0.6
+
+[gbo_greh_sabaoth_ghost]:gbo_greh_castigator_5		;; LTTZ DC
+armor			= 10.0
+dmg_reduction	= 0.9

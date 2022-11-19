@@ -1,0 +1,30 @@
+function get_outfit_ap_res(obj)
+	-- Object exists
+	if obj then
+		local outfit = IsOutfit(obj)
+		local helmet = IsHeadgear(obj)
+		local cobj = outfit and obj:cast_CustomOutfit() or helmet and obj:cast_Helmet()
+		if (not cobj) then
+			return 0
+		end
+			-- Outfit
+		if outfit then
+			armor_hit_frac = ini_sys:r_float_ex(obj:section(), "hit_fraction_actor") or 1
+			armor_bone_value = (1 - armor_hit_frac) * 0.75 or 0
+				
+			-- Helmet
+		elseif helmet then
+			helmet_hit_frac = ini_sys:r_float_ex(obj:section(), "hit_fraction_actor") or 1
+			armor_bone_value = (1 - helmet_hit_frac) or 0  
+		end
+		
+		return armor_bone_value * obj:condition()
+	end
+end
+
+function get_outfit_immunity(obj, immunity)
+	if obj then
+		immu_sec = ini_sys:r_string_ex(obj:section(), "immunities_sect")
+		return ini_sys:r_float_ex(immu_sec, immunity) or 0
+	end
+end

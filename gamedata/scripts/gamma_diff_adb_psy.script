@@ -1,0 +1,140 @@
+local get_outfit 	= arszi_psy.get_telepatic_protection_outfit
+local get_helmet 	= arszi_psy.get_telepatic_protection_helmet
+local get_artefacts = arszi_psy.get_telepatic_protection_artefacts
+local get_booster 	= arszi_psy.get_telepatic_protection_booster
+local adb			= gamma_diff_adb
+--local get_psyhelm 	= arszi_psy.get_telepatic_protection_outfit
+
+local function load_defaults()
+	local t = {}
+	local op = gamma_diff_mcm.op
+	for i, v in ipairs(op.gr) do
+		if v.def ~= nil then
+			t[v.id] = v.def
+		end
+	end
+	return t
+end
+
+local settings = load_defaults()
+
+local function load_settings()
+	settings = load_defaults()
+	if ui_mcm then
+		for k, v in pairs(settings) do
+			settings[k] = ui_mcm.get("gamma_diff/" .. k)
+		end
+	end
+end
+
+local function trace(str, ...)
+	if not settings.debug then
+		printf("[G.A.M.M.A. THE THING] PSY: " .. str, ...)
+	end
+end
+
+function get_psyhelm()
+	if dialogs_yantar.actor_has_psi_helmet() then
+		if dialogs_yantar.actor_has_bad_psi_helmet() then
+			trace('Actor has the Uncalibrated Helm.')
+			return 1.0
+		else
+			trace('Actor has the Calibrated Helm. >> Physical protection / 0.75')
+			return 0.75
+		end
+	else
+		trace('Actor does not have the Helm. >> Physical protection / 1.25')
+		return 1.25
+	end
+	
+	return 1.0
+	
+end
+
+function get_psy_res(shit)
+	adb.get_protection(shit, "bip01_head", 0)
+
+	scale = adb.scale and adb.scale or 1
+	total_prot = adb.total_prot and adb.total_prot or 0
+	bo_prot = adb.bo_prot and adb.bo_prot or 0
+	af_prot = adb.af_prot and adb.af_prot or 0
+
+	psy_helm = get_psyhelm()
+
+	if af_prot < 0 then
+		af_prot = math.max(-0.9999, af_prot)	-- Cap negatives at -99%
+		af_prot = (af_prot * af_prot) * -1.0	-- Then make them not as punishing.
+	end
+
+	total_prot = total_prot / psy_helm
+end
+
+function arszi_psy.get_telepatic_protection_total()
+	return 0
+end
+
+local base_psy = arszi_psy.actor_on_before_hit
+
+function arszi_psy.actor_on_before_hit(shit)
+end
+
+-- Stolen from PBA, again.
+-- Get psy table to manipulate psy health values
+local actor_psy_table = {}
+function get_actor_psy_table()
+	if is_not_empty(actor_psy_table) then return end
+
+	local m_data = alife_storage_manager.get_state()
+	arszi_psy.save_state(m_data) 
+	actor_psy_table = m_data.psy_table
+end
+
+function get_psy_health()
+	if actor_psy_table.actor_psy_health then
+		return actor_psy_table.actor_psy_health
+	end
+end
+
+function set_psy_health(amount)
+	if actor_psy_table.actor_psy_health then
+		actor_psy_table.actor_psy_health = amount <= 1 and amount or 1
+	end
+end
+
+function change_psy_health(amount)
+	if actor_psy_table.actor_psy_health then
+		set_psy_health(actor_psy_table.actor_psy_health + amount)
+	end
+end
+
+function actor_on_first_update()
+	get_actor_psy_table()
+end
+
+function actor_on_before_hit(shit)
+	if shit.type ~= 4 then return end
+
+	get_psy_res(shit)
+
+	if string.find(shit.draftsman:name(), "zone_") then
+		trace('Psy damage was dealt by an Anomaly. >> Damage x0.5')
+		shit.power = shit.power * 0.5
+	end
+
+	damage = (shit.power * scale) * (1 - total_prot) * (1 - af_prot) * (1 - bo_prot) --* psy_helm
+	trace('Final damage: %s >> (%s x %s) x (1 - %s) x (1 - %s) x (1 - %s)', damage, shit.power, scale, total_prot, af_prot, bo_prot, psy_helm)
+	
+	old_psy = get_psy_health()
+	change_psy_health(-damage)
+	new_psy = get_psy_health()
+
+	--trace('Psy before: %s // Psy now: %s // Should be: %s >> (%s - %s)', old_psy, new_psy, (old_psy - damage), old_psy, damage)
+
+	shit.power = 0
+	return
+end
+
+function on_game_start()
+	RegisterScriptCallback("actor_on_before_hit", actor_on_before_hit)
+	RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
+end

@@ -1,0 +1,153 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;		 G.A.M.M.A. THE THING UPDATE		;;
+;;			PLAYER (ACTOR) MODULE			;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;											;;
+;; Values explained below!                  ;;
+;;                                          ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[adb_actor]
+invul_frac              = 120               ;; Hz to base the invul frames on   { 1 <= this < +inf }
+invul_time_bullet       = 3                 ;; i.e. this would be (1/120)       { 0 <= this < +inf }
+invul_time_zone_mine    = 30                ;; (30/120)
+invul_time_zone_field   = 30                ;; (24/120)
+invul_time_strike_self  = 60                ;; This hopefully covers all multihit fall damage instances, like jumping really fast into a bush
+health_gate_time        = 1500              ;; In miliseconds
+health_gate_limit       = 0.15              ;; Minimum health when health gating is active
+health_gate_trigger     = 0.5               ;; Minimum health to be able to TRIGGER health gating
+zone_field_damage       = 0.1               ;; Multiplier for damage taken from AOE anomalies (See the Hell's Walls anomaly's damage over time)
+zone_field_degrade      = 0.15              ;; Multiplier for the damage to armor from AOE anomalies
+zone_field_protection   = 3.0               ;; Multiplier for the [protection] stat (see below) when being damaged by AOE anomalies
+zone_mine_damage        = 1.0               ;; These 3 are for the weird damage over time that most anomalies have
+zone_mine_degrade       = 0.5               ;; Not to be confused with the FIELD ANOMALIES, please.
+zone_mine_protection    = 1.0
+
+[adb_balance]
+12x70_buck				= 0.3               ;; Multiplier for damage taken from these ammo types
+12x76_zhekan			= 0.5
+12x76_dart              = 0.5
+20x70_buck				= 0.3               ;; Includes [*_bad] and [*_very_bad] variants automatically
+23x75_shrapnel			= 0.2               ;; So, yeah, no arti's balls for you (YET)
+23x75_barrikada			= 0.2
+pkm_100                 = 0.25              ;; Nor any ammo mod that changes old ammo in significant ways.
+
+[adb_dmg_0]
+hit_type                = 0                 ;; ID of the damage type
+immunity                = burn_immunity     ;; Name of the stat to scale the DAMAGE TO ARMOR (and also the protection stat from artefacts)
+protection              = Burn              ;; Name of the stat to scale the DAMAGE TO THE ACTOR
+booster_type_def        = 8                 ;; ID of the booster item that affects the [protection] stat
+adjuster                = 0.5               ;; Multiplier for the [protection] stat                                     { 0.0   <=  adjuster    < +inf  }
+limiter                 = 0.95              ;; Caps [protection] to this value to prevent complete invulnerability      { 0.0   <   limiter     < 1.0   }
+absorb                  = 0.85              ;; Added to the [immunity] stat when taking damage.                         { -inf  <   absorb      < 1.0   }
+bleed                   = 0.0               ;; % of the received damage to be added as bleeding.                        { 0.0   <=  bleed       < +inf  }
+scale                   = 1.5               ;; Multiplier for the overall damage (both to actor and armor)              { 0.0   <   scale       < +inf  }
+arti                    = 1.0               ;; Multiplier for ARTEFACTS' stats                                          { 0.0   <   arti        < +inf  }
+booster                 = 1.0               ;; Multiplier for BOOSTERS' stats                                           { 0.0   <   booster     < +inf  }
+
+[adb_dmg_1]
+hit_type                = 1
+immunity                = shock_immunity
+protection              = Shock
+booster_type_def        = 9
+adjuster                = 0.125
+limiter                 = 0.9
+absorb                  = -0.5
+bleed                   = 0.0
+scale                   = 2.0
+arti                    = 1.0
+booster                 = 1.0
+
+[adb_dmg_2]
+hit_type                = 2
+immunity                = chemical_burn_immunity
+protection              = ChemicalBurn
+booster_type_def        = 7
+adjuster			    = 1.0
+limiter				    = 0.9
+absorb				    = 0.5
+bleed				    = 0.15
+scale				    = 1.5
+arti				    = 2.5
+booster                 = 15.0
+
+[adb_dmg_3]
+hit_type                = 3
+immunity			    = radiation_immunity
+protection			    = Radiation
+booster_type_def	    = 5
+adjuster			    = 10.5
+limiter				    = 0.99
+absorb				    = 0.0
+bleed				    = 0.0
+scale				    = 0.075
+arti				    = 30.0
+booster                 = 20.0
+
+[adb_dmg_4]
+hit_type                = 4
+immunity			    = telepatic_immunity
+protection			    = Telepatic
+booster_type_def	    = 6
+adjuster			    = 3.0
+limiter				    = 0.975
+absorb				    = 0.0
+bleed				    = 0.0
+scale				    = 0.67
+arti			    	= 3.0
+booster                 = 20.0
+
+[adb_dmg_5]
+hit_type                = 5
+immunity 			    = wound_immunity
+protection 			    = Wound
+booster_type_def 	    = 16
+adjuster 			    = 0.85
+limiter 			    = 0.95
+absorb				    = -0.1
+bleed				    = 1.0
+scale				    = 0.5
+arti				    = 1.0
+booster                 = 2.0
+
+[adb_dmg_6]
+hit_type                = 6
+immunity 			    = fire_wound_immunity
+protection 			    = FireWound
+booster_type_def 	    = 15
+adjuster 			    = 0.85
+limiter 			    = 0.90
+absorb				    = 0.0
+bleed				    = 1.0
+scale			    	= 0.75
+arti			    	= 1.0
+booster                 = 2.0
+
+[adb_dmg_7]
+hit_type                = 7
+immunity			    = strike_immunity
+protection			    = Strike
+booster_type_def	    = 14
+adjuster			    = 1.25
+limiter				    = 0.80
+absorb				    = 0.05
+bleed				    = 0.15
+scale				    = 0.75
+arti				    = 1.0
+booster                 = 2.0
+
+[adb_dmg_8]
+hit_type                = 8
+immunity		    	= explosion_immunity
+protection			    = Explosion
+booster_type_def	    = 13
+adjuster			    = 1.5
+limiter				    = 0.85
+absorb			    	= 1.5
+bleed			    	= 0.5
+scale			    	= 1.0
+arti			    	= 1.0
+booster                 = 3.0
+
+[adb_dmg_9]:adb_dmg_5
+[adb_dmg_10]:adb_dmg_0

@@ -1,0 +1,384 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;		 G.A.M.M.A. THE THING UPDATE		;;
+;;			  MONSTERS PLUGIN				;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;											;;
+;; [gbo_(monster section]:gbo_monster_base	;;
+;; (ammo_section)** = (multiplier)			;;
+;; (...)									;;
+;; crit_mul = (multiplier)					;;
+;; crit_spots = (bone_id), (...)			;;
+;; armor = (multiplier)						;;
+;;											;;
+;; **:  Define ammo WITHOUT the "ammo_"		;;
+;;		prefix and the "bad" or "very_bad"	;;
+;;		suffixes.							;;
+;;											;;
+;; (armor) means DAMAGE REDUCTION			;;
+;; yes i do know it's a bad name but eh		;;
+;;											;;
+;; What to do?								;;
+;;	- Add support for the bibliotekar		;;
+;;	- Add support for DLTX Dyn. Mutants		;;
+;;	- Create unique profiles?				;;
+;;											;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_monster_base]
+crit_spots				= 
+crit_mul				= 1.0
+armor					= 1.0
+12x70_buck				= 0.9
+20x70_buck				= 0.9
+23x75_shrapnel			= 1.5
+12x76_zhekan			= 1.4
+23x75_barrikada			= 2.0
+7.62x25_ps				= 1.15
+357_hp_mag				= 2.3
+11.43x23_hydro			= 1.05
+11.43x23_fmj			= 1.2
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_bloodsucker_normal]:gbo_monster_base
+crit_spots				= 14
+crit_mul				= 1.4
+armor					= 0.85
+
+[gbo_bloodsucker_black_normal]:gbo_bloodsucker_normal
+[gbo_bloodsucker_green_normal]:gbo_bloodsucker_normal
+[gbo_bloodsucker_red_normal]:gbo_bloodsucker_normal
+[gbo_bloodsucker_strong]:gbo_bloodsucker_normal
+[gbo_bloodsucker_black_strong]:gbo_bloodsucker_strong		;; Inherit from the "_strong" version just in case you want to edit its properties but forget to edit the hundred other recolors
+[gbo_bloodsucker_green_strong]:gbo_bloodsucker_strong
+[gbo_bloodsucker_red_strong]:gbo_bloodsucker_strong
+[gbo_bloodsucker_strong_big]:gbo_bloodsucker_strong			;; Large Krovoso:tm:
+[gbo_bloodsucker_weak]:gbo_bloodsucker_normal
+[gbo_bloodsucker_black_weak]:gbo_bloodsucker_weak			;; Same for "_weak"
+[gbo_bloodsucker_green_weak]:gbo_bloodsucker_weak
+[gbo_bloodsucker_red_weak]:gbo_bloodsucker_weak
+
+[gbo_psysucker_normal]:gbo_bloodsucker_normal
+crit_mul				= 1.6
+
+[gbo_psysucker_strong]:gbo_psysucker_normal
+[gbo_psysucker_weak]:gbo_psysucker_normal
+[gbo_psysucker_black]:gbo_psysucker_normal
+[gbo_psysucker_brown]:gbo_psysucker_normal
+[gbo_psysucker_white]:gbo_psysucker_normal
+[gbo_psysucker_1_normal]:gbo_psysucker_normal
+[gbo_psysucker_1_strong]:gbo_psysucker_strong
+[gbo_psysucker_1_weak]:gbo_psysucker_weak
+[gbo_psysucker_2_normal]:gbo_psysucker_normal
+[gbo_psysucker_2_strong]:gbo_psysucker_strong
+[gbo_psysucker_2_weak]:gbo_psysucker_weak
+[gbo_psysucker_3_normal]:gbo_psysucker_normal
+[gbo_psysucker_3_strong]:gbo_psysucker_strong
+[gbo_psysucker_3_weak]:gbo_psysucker_weak
+[gbo_m_psysucker_e]:gbo_psysucker_1_normal
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_boar_normal]:gbo_monster_base
+crit_spots				= 20
+crit_mul				= 2.0
+armor					= 0.9
+
+[gbo_boar_strong]:gbo_boar_normal
+[gbo_boar_01a_hard]:gbo_boar_strong
+[gbo_boar_01a_weak]:gbo_boar_normal
+[gbo_boar_02a_hard]:gbo_boar_strong
+[gbo_boar_02a_weak]:gbo_boar_normal
+[gbo_boar_02a_strong]:gbo_boar_strong
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_burer_normal]:gbo_monster_base
+crit_spots				= 39, 40, 41, 42, 44, 45, 47, 48
+crit_mul				= 2.0
+armor					= 0.8
+
+[gbo_burer_blue_blue]:gbo_burer_normal
+[gbo_burer_electra]:gbo_burer_normal
+[gbo_burer_fire]:gbo_burer_normal
+[gbo_burer_normal2]:gbo_burer_normal
+[gbo_burer_weak]:gbo_burer_normal
+[gbo_burer_weak2]:gbo_burer_weak
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_cat_normal_a]:gbo_monster_base
+crit_spots				= 13
+crit_mul				= 1.5
+
+;; This is fucking DUMB
+;; But it's better for user friendly modding
+
+[gbo_cat_normal_b]:gbo_cat_normal_a
+[gbo_cat_normal_c]:gbo_cat_normal_a
+[gbo_cat_normal_d]:gbo_cat_normal_a
+[gbo_cat_normal_e]:gbo_cat_normal_a
+[gbo_cat_strong_a]:gbo_cat_normal_a
+[gbo_cat_strong_afro]:gbo_cat_strong_a
+[gbo_cat_strong_b]:gbo_cat_strong_a
+[gbo_cat_strong_c]:gbo_cat_strong_a
+[gbo_cat_strong_d]:gbo_cat_strong_a
+[gbo_cat_strong_e]:gbo_cat_strong_a
+[gbo_cat_weak_a]:gbo_cat_normal_a
+[gbo_cat_weak_b]:gbo_cat_weak_a
+[gbo_cat_weak_c]:gbo_cat_weak_a
+[gbo_cat_weak_d]:gbo_cat_weak_a
+[gbo_cat_weak_e]:gbo_cat_weak_a
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_chimera_normal]:gbo_monster_base
+crit_spots				= 25, 26, 27, 28, 29, 30, 31, 34, 35
+crit_mul				= 2.0
+armor					= 0.75
+
+[gbo_chimera_normal2]:gbo_chimera_normal
+[gbo_chimera_normal3]:gbo_chimera_normal
+[gbo_chimera_strong]:gbo_chimera_normal
+[gbo_chimera_strong2]:gbo_chimera_strong
+[gbo_chimera_strong3]:gbo_chimera_strong
+[gbo_chimera_strong4]:gbo_chimera_strong
+[gbo_chimera_weak]:gbo_chimera_normal
+
+[gbo_lurker_1_normal]:gbo_chimera_normal
+[gbo_lurker_1_strong]:gbo_chimera_strong
+[gbo_lurker_1_weak]:gbo_chimera_weak
+[gbo_lurker_2_normal]:gbo_lurker_1_normal
+[gbo_lurker_2_strong]:gbo_lurker_1_strong
+[gbo_lurker_2_weak]:gbo_lurker_1_weak
+[gbo_lurker_3_normal]:gbo_lurker_1_normal
+[gbo_lurker_3_strong]:gbo_lurker_1_strong
+[gbo_lurker_3_weak]:gbo_lurker_1_weak
+[gbo_m_lurker_e]:gbo_lurker_1_normal
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_controller_tubeman]:gbo_monster_base
+crit_spots				= 31
+crit_mul				= 1.5
+
+[gbo_m_controller_normal]:gbo_controller_tubeman
+[gbo_m_controller_normal1111]:gbo_controller_tubeman
+[gbo_m_controller_normal2]:gbo_controller_tubeman
+[gbo_m_controller_normal666]:gbo_controller_tubeman
+[gbo_m_controller_normal777]:gbo_controller_tubeman
+[gbo_m_controller_normal888]:gbo_controller_tubeman
+[gbo_m_controller_psy]:gbo_controller_tubeman
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_dog_normal]:gbo_monster_base
+crit_spots				= 15
+crit_mul				= 1.5
+
+[gbo_dog_normal_brown]:gbo_dog_normal
+[gbo_dog_normal_bulterier]:gbo_dog_normal
+[gbo_dog_normal_red]:gbo_dog_normal
+[gbo_dog_normal_white]:gbo_dog_normal
+[gbo_dog_strong]:gbo_dog_normal
+[gbo_dog_strong_black]:gbo_dog_strong
+[gbo_dog_strong_brown]:gbo_dog_strong
+[gbo_dog_strong_bulterier]:gbo_dog_strong
+[gbo_dog_strong_red]:gbo_dog_strong
+[gbo_dog_strong_white]:gbo_dog_strong
+[gbo_dog_weak]:gbo_dog_normal
+[gbo_dog_weak_brown]:gbo_dog_weak
+[gbo_dog_weak_bulterier]:gbo_dog_weak
+[gbo_dog_weak_red]:gbo_dog_weak
+[gbo_dog_build]:gbo_dog_normal
+[gbo_dog_cute]:gbo_dog_normal
+[gbo_dog_header]:gbo_dog_normal
+
+[gbo_zat_b18_dog_little]:gbo_dog_weak
+[gbo_zat_b18_dog_little_m]:gbo_dog_weak
+[gbo_zat_b18_dog_little_two]:gbo_dog_weak
+[gbo_zat_b18_dog_little_two_m]:gbo_dog_weak
+
+[gbo_pseudodog_normal]:gbo_dog_normal
+[gbo_pseudodog_strong]:gbo_pseudodog_normal
+[gbo_pseudodog_weak]:gbo_pseudodog_normal
+[gbo_pseudodog_grey_strong]:gbo_pseudodog_strong
+[gbo_pseudodog_grey_weak]:gbo_pseudodog_weak
+
+[gbo_psy_dog]:gbo_pseudodog_strong
+armor					= 1.5
+crit_mul				= 2.0
+
+[gbo_psy_dog_normal]:gbo_pseudodog_normal
+armor					= 2.0
+crit_mul				= 2.0
+
+[gbo_psy_dog_phantom]:gbo_pseudodog_weak
+armor					= 10.0
+crit_mul				= 10.0
+
+[gbo_jup_b16_pseudodog_strong]:gbo_pseudodog_strong
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_flesh_normal]:gbo_monster_base
+crit_spots				= 13
+crit_mul				= 1.3
+armor					= 0.9
+
+[gbo_flesh_strong]:gbo_flesh_normal
+[gbo_flesh_weak]:gbo_flesh_normal
+[gbo_flesh_01a_normal]:gbo_flesh_normal
+[gbo_flesh_01a_strong]:gbo_flesh_strong
+[gbo_flesh_01a_weak]:gbo_flesh_weak
+[gbo_flesh_02a_normal]:gbo_flesh_normal
+[gbo_flesh_02a_strong]:gbo_flesh_strong
+[gbo_flesh_02a_weak]:gbo_flesh_weak
+[gbo_flesh_03a_normal]:gbo_flesh_normal
+[gbo_flesh_03a_strong]:gbo_flesh_strong
+[gbo_flesh_03a_weak]:gbo_flesh_weak
+[gbo_flesh_bolot]:gbo_flesh_strong
+[gbo_flesh_bolot1]:gbo_flesh_bolot
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_fracture_normal]:gbo_monster_base
+crit_spots				= 13
+crit_mul				= 2.0
+armor					= 2.5
+
+[gbo_fracture_strong]:gbo_fracture_normal
+[gbo_fracture_weak]:gbo_fracture_normal
+[gbo_fracture_2]:gbo_fracture_normal
+[gbo_fracture_3]:gbo_fracture_normal
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_gigant_normal]:gbo_monster_base
+crit_spots				= 1, 2, 3, 4, 5
+crit_mul				= 2.0
+12x70_buck				= 1.4
+20x70_buck				= 1.4
+23x75_shrapnel			= 2.2
+23x75_barrikada			= 2.3
+357_hp_mag				= 1.3
+11.43x23_hydro			= 1.3
+armor					= 0.85
+
+[gbo_gigant_strong]:gbo_gigant_normal
+[gbo_gigant_weak]:gbo_gigant_normal
+
+[gbo_gigant_jumper]:gbo_gigant_weak
+crit_mul				= 2.5
+armor					= 1.15
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_karlik]:gbo_monster_base ;; CARLOS
+crit_spots				= 15, 20, 21
+crit_mul				= 2.0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_m_poltergeist_e]:gbo_monster_base
+crit_spots				= 1
+crit_mul				= 3.0
+armor					= 1.5
+
+[gbo_m_poltergeist_normal_tele]:gbo_m_poltergeist_e
+[gbo_m_poltergeist_normal_flame]:gbo_m_poltergeist_e
+armor					= 1.0
+[gbo_m_poltergeist_normal_black]:gbo_m_poltergeist_e
+crit_mul				= 6.0
+armor					= 0.5
+
+[gbo_poltergeist_fake]:gbo_m_poltergeist_normal_tele
+[gbo_pri_a25_poltergeist]:gbo_m_poltergeist_normal_tele
+[gbo_poltergeist_labx8]:gbo_m_poltergeist_normal_tele
+
+[gbo_poltergeist_build]:gbo_m_poltergeist_e
+crit_mul				= 2.0
+armor 					= 1.0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_rat_normal]:gbo_monster_base
+crit_spots				= 13
+crit_mul				= 1.5
+armor					= 0.5
+
+[gbo_rat_strong]:gbo_rat_normal
+[gbo_rat_weak]:gbo_rat_normal
+
+[gbo_rat_wolf]:gbo_rat_strong	;; THE BIG RAT
+crit_mul				= 1.0
+armor					= 0.0125
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_snork_normal]:gbo_monster_base
+crit_spots				= 4
+crit_mul				= 2.0
+armor					= 0.95
+
+[gbo_snork_strong]:gbo_snork_normal
+[gbo_snork_weak]:gbo_snork_normal
+[gbo_snork_normal2]:gbo_snork_normal
+[gbo_snork_normal3]:gbo_snork_normal
+[gbo_snork_normal4]:gbo_snork_normal
+[gbo_snork_normal_no_mask]:gbo_snork_normal
+[gbo_snork_strong2]:gbo_snork_strong
+[gbo_snork_strong3]:gbo_snork_strong
+[gbo_snork_strong4]:gbo_snork_strong
+[gbo_snork_strong_no_mask]:gbo_snork_strong
+[gbo_snork_weak2]:gbo_snork_weak
+[gbo_snork_weak3]:gbo_snork_weak
+[gbo_snork_weak4]:gbo_snork_weak
+[gbo_snork_weak_no_mask]:gbo_snork_weak
+[gbo_snork_indoor]:gbo_snork_normal
+[gbo_snork_indoor_normal]:gbo_snork_normal
+[gbo_snork_indoor_strong]:gbo_snork_strong
+[gbo_snork_indoor_weak]:gbo_snork_weak
+[gbo_snork_outdoor]:gbo_snork_normal
+[gbo_snork_jumper]:gbo_snork_normal
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_tushkano_normal]:gbo_monster_base
+crit_spots				= 25
+crit_mul				= 2.0
+armor					= 0.5
+
+[gbo_tushkano_strong]:gbo_tushkano_normal
+[gbo_tushkano_weak]:gbo_tushkano_normal
+[gbo_tushkano_normal_a]:gbo_tushkano_normal
+[gbo_tushkano_normal_b]:gbo_tushkano_normal
+[gbo_tushkano_normal_c]:gbo_tushkano_normal
+[gbo_tushkano_strong_a]:gbo_tushkano_strong
+[gbo_tushkano_strong_b]:gbo_tushkano_strong
+[gbo_tushkano_strong_c]:gbo_tushkano_strong
+[gbo_tushkano_weak_a]:gbo_tushkano_weak
+[gbo_tushkano_weak_b]:gbo_tushkano_weak
+[gbo_tushkano_weak_c]:gbo_tushkano_weak
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[gbo_zombie_normal]:gbo_monster_base
+crit_spots				= 12
+crit_mul				= 2.0
+armor					= 3.6
+
+[gbo_zombie_strong]:gbo_zombie_normal
+[gbo_zombie_weak]:gbo_zombie_normal
+[gbo_zombi_9]:gbo_zombie_normal
+[gbo_zombi_babka_1]:gbo_zombie_normal
+[gbo_zombi_babka_2]:gbo_zombie_normal
+[gbo_zombi_babka_3]:gbo_zombie_normal
+[gbo_zombi_x3]:gbo_zombie_normal
+[gbo_zombi_x4]:gbo_zombie_normal
+[gbo_zombie_blind]:gbo_zombie_strong
+[gbo_zombie_fake]:gbo_zombie_weak
+[gbo_zombie_ghol]:gbo_zombie_weak
+[gbo_zombie_ghost]:gbo_zombie_weak
+[gbo_zombie_teta]:gbo_zombie_weak
+[gbo_zombie_wich]:gbo_zombie_weak

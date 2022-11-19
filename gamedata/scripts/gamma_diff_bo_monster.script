@@ -1,0 +1,202 @@
+local FX_Play 		= gamma_diff_utils.FX_Play
+local get_Barrel 	= gamma_diff_utils.get_Barrel
+local play_sound	= gamma_diff_utils.play_sound
+ini_monster 		= ini_file_ex("plugins\\gamma_monsters.ltx")
+ini_particles		= ini_file_ex("plugins\\gamma_particles.ltx")
+
+local function load_defaults()
+	local t = {}
+	local op = gamma_diff_mcm.op
+	for i, v in ipairs(op.gr) do
+		if v.def ~= nil then
+			t[v.id] = v.def
+		end
+	end
+	return t
+end
+
+local settings = load_defaults()
+
+local function load_settings()
+	settings = load_defaults()
+	if ui_mcm then
+		for k, v in pairs(settings) do
+			settings[k] = ui_mcm.get("gamma_diff/" .. k)
+		end
+	end
+end
+
+local function trace(str, ...)
+	if settings.debug then
+		printf("[G.A.M.M.A. THE THING]: MONSTERS >>> " .. str, ...)
+	end
+end
+
+function monster_on_before_hit(monster,shit,bone_id)
+
+	if shit.draftsman:id() ~= db.actor:id() then
+		return
+	end
+	
+	if bone_id == 65535 then
+		return
+	end
+	
+	if not monster:alive() then
+		return
+	end
+	
+	local shooter = shit.draftsman
+	wpn = level.object_by_id(shit.weapon_id)
+	
+	if wpn == nil then 
+		return 
+	end
+	
+	--if IsGrenade(wpn) then
+	--	return
+	--end
+	
+	if not IsWeapon(wpn) then --or IsMelee(wpn) then
+		return
+	end
+	
+	sec = wpn:section()
+	
+	--[[
+	if string.find(sec, "explosive_") then
+		return
+	end
+	--]]
+	
+	cqc_mult 			= 1.0
+	mutant_mult			= 0.85
+	ammo_mult			= 0.85
+	spec_monster_mult	= 1.00
+	bone_mult			= 1.00
+	
+	trace('%s about to be hit by %s in bone %s', monster and monster:name(), shit and shit.draftsman and shit.draftsman:name(), bone_id)
+	
+	if (string.match(sec, "knife")) then
+		cqc_mult = 3.0 * settings.knife_mul_mt
+	end
+	
+	if (string.match(sec, "axe")) then
+		cqc_mult = 3.0 * (settings.knife_mul_mt / 2.0)
+	end
+
+	local wpn_id = wpn:id()
+	local ammo_type_number = wpn:get_ammo_type()
+	local ammo_list = utils_item.get_ammo(sec, wpn_id)
+	local ammo_section = ammo_list[ammo_type_number+1]
+	local wpn_hit_power = ui_wpn_params.read_float(sec, "", "hit_power") or 1.0
+	
+	local k_ap = ini_sys:r_float_ex(ammo_section, "k_ap") or 0.05
+	local k_hit = ini_sys:r_float_ex(ammo_section, "k_hit") or 1
+	local air_res = ini_sys:r_float_ex(ammo_section, "k_air_resistance") or 0.05
+	local monster_pos = monster:position()
+	local shooter_pos = shooter:position()
+	local dist = monster_pos:distance_to(shooter_pos)
+	
+	ammo_section = string.gsub(ammo_section, "ammo_", "")
+	ammo_section = string.gsub(ammo_section, "_bad", "")
+	ammo_section = string.gsub(ammo_section, "_very", "")
+	
+	local barrel_condition_corrected = get_Barrel(wpn)
+	
+	-- Parse ini_monster
+	local who = nil
+	local can_crit = {}
+	local crit_bones = nil
+	local crit_table = {}
+	
+	if ini_monster:section_exist("gbo_" .. monster:section()) then
+		who = "gbo_" .. monster:section()
+	else
+		who = "gbo_monster_base"
+	end
+	
+	can_crit = ini_monster:r_string_ex(who, "crit_spots")
+	if can_crit ~= nil then
+		crit_bones = str_explode(can_crit, ",")
+		for i = 1, #crit_bones do
+			crit_table[#crit_table + 1] = crit_bones[i]
+		end
+	
+		if #crit_table > 0 then
+			can_crit = true
+		else
+			can_crit = false
+		end
+	else
+		trace("Monster [" .. who .. "] doesn't have critical spots defined!")
+		can_crit = false
+	end
+	
+	for a = 1, #crit_table do
+		if string.find(crit_table[a], bone_id) then
+			bone_mult = tonumber(ini_monster:r_string_ex(who, "crit_mul"))
+			trace("Critical hit @ [" .. bone_id .. "]!")
+			break
+		end
+	end
+	
+	if ini_monster:line_exist(who, ammo_section) then
+		ammo_mult = tonumber(ini_monster:r_string_ex(who, ammo_section)) or 1
+	end
+	
+	spec_monster_mult = tonumber(ini_monster:r_string_ex(who, "armor")) or 1
+
+	shit.power = shit.power / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * mutant_mult * ammo_mult * spec_monster_mult * bone_mult * cqc_mult * barrel_condition_corrected
+	
+	if settings.mutant_armor_tg == true and can_crit then
+		if bone_mult > 1 then
+			shit.power = shit.power * (settings.mutant_armor + 1.0)
+			FX_Play("pfx_flesh", monster, shit, monster:bone_name(bone_id))
+		else
+			shit.power = shit.power * settings.mutant_armor
+			FX_Play("pfx_armor", monster, shit, monster:bone_name(bone_id))	
+		end
+	end
+	
+	shit.power = shit.power / settings.mutant_hp
+	
+	perk_based_artefacts.last_npc_hit = hit(shit)
+	perk_based_artefacts.last_npc_hit_bone_index = bone_id    
+	
+	local pbadamage = hit(shit)
+	perk_based_artefacts.process_artefacts(perk_based_artefacts.artefact_on_monster_before_hit_functions, monster, pbadamage, bone_id)
+	
+	shit.power = pbadamage.power
+	
+	life_remove = (monster.health - (shit.power / settings.mutant_hp)) * 0.4
+	
+	local gib_threshold = -0.5
+	if string.find(ammo_section, "buck") or string.find(ammo_section, "shrapnel") then
+		gib_threshold = gib_threshold / 4
+	end
+	if string.find(ammo_section, "gauss") then
+		gib_threshold = 0.0
+	end
+	
+	-- LUDICROUS GIBS
+	if life_remove <= gib_threshold then
+		if settings.gibs and math.random(1, 10) >= 8 then
+			FX_Play("pfx_gibs", monster, shit, bone_id)
+			play_sound("gore\\hit_zombie_"..math.random(23), 1.0, monster)
+		end
+		shit.impulse = shit.impulse * 25.0
+		shit.bone = "bip01_spine"
+	end
+	
+	
+	trace("Final damage: [" .. shit.power .. "]")
+	
+	return
+end
+
+function on_game_start()
+	RegisterScriptCallback("monster_on_before_hit", monster_on_before_hit)
+	RegisterScriptCallback("actor_on_first_update", load_settings)
+	RegisterScriptCallback("on_option_change", load_settings)
+end
