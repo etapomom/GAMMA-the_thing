@@ -12,6 +12,7 @@ invul_frac              = 120               ;; Hz to base the invul frames on   
 invul_time_bullet       = 3                 ;; i.e. this would be (1/120)       { 0 <= this < +inf }
 invul_time_zone_mine    = 30                ;; (30/120)
 invul_time_zone_field   = 30                ;; (24/120)
+invul_time_zone_ball    = 30
 invul_time_strike_self  = 60                ;; This hopefully covers all multihit fall damage instances, like jumping really fast into a bush
 health_gate_time        = 1500              ;; In miliseconds
 health_gate_limit       = 0.15              ;; Minimum health when health gating is active
@@ -22,6 +23,9 @@ zone_field_protection   = 3.0               ;; Multiplier for the [protection] s
 zone_mine_damage        = 1.0               ;; These 3 are for the weird damage over time that most anomalies have
 zone_mine_degrade       = 0.5               ;; Not to be confused with the FIELD ANOMALIES, please.
 zone_mine_protection    = 1.0
+zone_ball_damage        = 1.0               ;; This is for fireballs (See the Comet anomaly in the Dark Valley)
+zone_ball_degrade       = 1.0
+zone_ball_protection    = 1.0
 
 [adb_balance]
 12x70_buck				= 0.3               ;; Multiplier for damage taken from these ammo types
@@ -50,11 +54,11 @@ hit_type                = 1
 immunity                = shock_immunity
 protection              = Shock
 booster_type_def        = 9
-adjuster                = 0.15
+adjuster                = 0.1
 limiter                 = 0.9
-absorb                  = -0.5
+absorb                  = -0.25
 bleed                   = 0.0
-scale                   = 2.0
+scale                   = 1.5
 arti                    = 1.0
 booster                 = 1.0
 
@@ -141,9 +145,9 @@ hit_type                = 8
 immunity		    	= explosion_immunity
 protection			    = Explosion
 booster_type_def	    = 13
-adjuster			    = 1.5
+adjuster			    = 0.4
 limiter				    = 0.85
-absorb			    	= 1.5
+absorb			    	= 1.0
 bleed			    	= 0.5
 scale			    	= 1.0
 arti			    	= 1.0

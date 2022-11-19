@@ -89,11 +89,13 @@ end
 
 local zone_last = {}
 local zone_field_last = {}
+local zone_ball_last = {}
 local hit_last = {}
 local fall_last = {}
 function clear_invuls()
 	zone_last = {}
 	zone_field_last = {}
+	zone_ball_last = {}
 	hit_last = {}
 	fall_last = {}
 end
@@ -538,6 +540,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 	invul_time_bullet 		= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_bullet") or 1), 0)
 	invul_time_zone_mine	= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_zone_mine") or 1), 0)
 	invul_time_zone_field	= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_zone_field") or 1), 0)
+	invul_time_zone_ball	= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_zone_gall") or 1), 0)
 	invul_time_strike_self	= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_strike_self") or 1), 0)
 
 	if (shit.type == hit.fire_wound) then
@@ -608,11 +611,38 @@ function actor_on_before_hit(shit, bone_id, flags)
 		
 	end
 	
+	local zone_forced = 0
+	local zone_field_forced = 0
 	if (shit.type ~= hit.radiation) and (shit.type ~= hit.telepatic) then
 		
 		trace('Elemental hit >> shit.type: %s', hit_type_id[shit.type])
 
-		if string.find(shit.draftsman:name(), "zone_mine") and shit.power <= 0.075 then
+		-- Fix some HILARIOUS default values
+		if shit.draftsman:section() == "zone_mine_field_soc" then
+			shit.power = shit.power / 15
+			-- These mines deal 35 (THIRTY FIVE) damage!
+			-- 3.5 makes them at least survivable without triggering the Health Gate
+		end
+		
+		-- Force all of these to be processed as zone_mine
+		if string.find(shit.draftsman:name(), "burning_fuzz")
+		or string.find(shit.draftsman:name(), "buzz")				-- Unused?
+		or string.find(shit.draftsman:name(), "gravi_zone")			-- Might be the VERY RARE SoC anomalies (I've seen them in Radar and in CNPP South)
+		or string.find(shit.draftsman:name(), "generator_")			-- Has damage defined (and it's A LOT)
+		or string.find(shit.draftsman:name(), "hvatalka")			-- Unused
+		or string.find(shit.draftsman:name(), "liana")				-- Unused
+		or string.find(shit.draftsman:name(), "monolith")			-- Has damage defined
+		or string.find(shit.draftsman:name(), "mosquito_bald")		-- Unused, funny name
+		or string.find(shit.draftsman:name(), "no_gravity")			-- Unused
+		or string.find(shit.draftsman:name(), "sarcofag")			-- Unused?
+		or string.find(shit.draftsman:name(), "student")			-- Unused?
+		or string.find(shit.draftsman:name(), "witches")			-- Central Pripyat shock anomalies
+		or string.find(shit.draftsman:name(), "zharka") then		-- Maybe up north too, for sure it's not unused
+			zone_forced = 1
+		end
+
+
+		if (string.find(shit.draftsman:name(), "zone_mine") or zone_forced == 1) and shit.power <= 0.075 then
 			
 			zone_dot = 1
 			
@@ -644,6 +674,24 @@ function actor_on_before_hit(shit, bone_id, flags)
 			else
 				shit_booster(shit, bone_id)
 				zone_field_last[shit.draftsman:id()] = time_global()
+			end
+			
+			return
+		end
+
+		if string.find(shit.draftsman:name(), "fireball_") then
+			zone_ball = 1
+
+			if zone_field_last[shit.draftsman:id()] then
+				if time_global() - zone_field_last[shit.draftsman:id()] >= (1000/invul_frac) * invul_time_zone_ball then
+					shit_booster(shit, bone_id)
+					zone_ball_last[shit.draftsman:id()] = time_global()
+				else
+					trace('Last damage tick was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_zone_ball)
+				end
+			else
+				shit_booster(shit, bone_id)
+				zone_ball_last[shit.draftsman:id()] = time_global()
 			end
 			
 			return
