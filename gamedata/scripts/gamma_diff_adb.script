@@ -7,6 +7,7 @@ local ceil					= math.ceil
 local min                   = math.min
 local max                   = math.max
 local wepl                  = wepl_hit_effect.actor_on_before_hit
+local haru					= haru_skills
 local tn                    = tonumber
 local health_gating_flag    = false
 local health_gating_active  = false
@@ -15,6 +16,13 @@ local ini_adb               = ini_file_ex("plugins\\gamma_actor.ltx")
 
 -- Kill wepl's original function to ENSURE it actually works.
 function wepl_hit_effect.actor_on_before_hit(shit, bone_id, flags)
+end
+
+-- Kill Haruka's Skills to ensure it works too
+function haru_skills.actor_on_before_hit(shit)
+end
+
+function utjan_traits.actor_on_before_hit(s_hit)
 end
 
 local function load_defaults()
@@ -383,25 +391,79 @@ end
 function shit_booster(shit, bone_id, k_ap)
 	get_protection(shit, bone_id and bone_id or "bip01_spine", k_ap and k_ap or 0)
 
-	damage = (shit.power * scale) * (1 - total_prot)
+	damage = (shit.power * scale)
 
-	if shit.type ~= hit.radiation and shit.type ~= hit.telepatic then
-		if zone_field == 1 then
-			damage = damage * max(tonumber(ini_adb:r_string_ex("adb_actor", "zone_field_damage") or 1), smallest)
+	if haru_skills then
+		local valid_hit = ((shit.type == 5) or (shit.type == 6) or (shit.type == 7) or (shit.type == 8)) and 1 or 0
+		local is_monster = ini_sys:r_string_ex(shit.draftsman:section(), "faction") or ""
+		if valid_hit then
+			haru_skills.increase_skill("survival", damage * 200)
+			local survival_resistance = haru_skills.skills_stats["survival"].resistance
+			shit.power = shit.power * survival_resistance
 		end
-		if zone_dot == 1 then
-			damage = damage * max(tonumber(ini_adb:r_string_ex("adb_actor", "zone_mine_damage") or 1), smallest)
+		
+		if utjan_traits then
+			if (string.find(is_monster, "monster")) and valid_hit and utjan_traits.traits_list["mutant_resist"].enabled then
+				shit.power = shit.power * utjan_traits.traits_list["mutant_resist"].multiplier
+			end
+
+			local gun = db.actor:active_item()
+			if gun and IsWeapon(gun) and (IsItem("fake_ammo_wpn", gun:section())) and valid_hit then
+				if utjan_traits.traits_list["melee_defense"].enabled == true then
+					shit.power = shit.power * utjan_traits.traits_list["melee_defense"].multiplier
+				end
+			end
+
+			if utjan_traits.traits_list["lone_stalker"].enabled and size_table(axr_companions.companion_squads) == 0 then
+				shit.power = shit.power * utjan_traits.traits_list["lone_stalker"].dmg_resist_mult
+			end
 		end
 	end
+
+	damage = damage * (1 - total_prot)
+
+	zone_mult = 1
+	if shit.type ~= hit.radiation and shit.type ~= hit.telepatic then
+		if zone_field == 1 then
+			zone_mult = max(tonumber(ini_adb:r_string_ex("adb_actor", "zone_field_damage") or 1), smallest)
+		end
+		if zone_dot == 1 then
+			zone_mult =  max(tonumber(ini_adb:r_string_ex("adb_actor", "zone_mine_damage") or 1), smallest)
+		end
+	end
+
+	damage = damage * zone_mult
 	
 	degrade_math = (damage * (0.07 * (1.0 + absorb))) * settings.armor_dur_ac
 	degrade_math = degrade_math * degrade_multiplier[game_num]
 
-	--damage = damage * (1 - af_prot) * (1 - bo_prot)
-	damage_math(shit, scale, total_prot, af_prot, bo_prot)
+	damage = damage_math(shit, scale, total_prot, af_prot, bo_prot)
+	damage = damage * zone_mult
+
+	-- Psy stress compatibility
+	if stress_mcm then
+		if arszi_psy.get_psy_wound_stress and shit.power > 0 then
+			c_psy_hit_stress_multiplier = ( stress_mcm.get_config("hit_stress") or 2.8 ) / 100
+
+			local h = hit()
+			h.power = clamp((damage * 2) * c_psy_hit_stress_multiplier, 0, 0.5)
+			h.direction = device().cam_dir
+			h.bone = "bip01_head"
+			h.draftsman = db.actor
+			h.impulse = 0
+			h.type = hit.telepatic
+
+			trace('Stressful Zone detected >> Dealing psy hit: %s power', h.power)
+
+			db.actor:hit(h)
+
+		end
+	end
 
 	if fall_damage == 1 then
 		degrade_math = 0
+		bleed = bleed * 2
+		damage = damage * 0.5
 	end
 	
 	if shit.type == hit.telepatic or shit.type == hit.radiation then
@@ -597,6 +659,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				hit_last[shit.draftsman:id()] = time_global()
 			else
 				trace('Last hit was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_bullet)
+				shit.power = 0
 			end
 		else
 			shit_booster(shit, bone_id, k_ap)
@@ -618,7 +681,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 		trace('Elemental hit >> shit.type: %s', hit_type_id[shit.type])
 
 		-- Fix some HILARIOUS default values
-		if shit.draftsman:section() == "zone_mine_field_soc" then
+		if string.find(shit.draftsman:name(), "zone_mine_field_soc") then
 			shit.power = shit.power / 15
 			-- These mines deal 35 (THIRTY FIVE) damage!
 			-- 3.5 makes them at least survivable without triggering the Health Gate
@@ -642,7 +705,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 		end
 
 
-		if (string.find(shit.draftsman:name(), "zone_mine") or zone_forced == 1) and shit.power <= 0.075 then
+		if (string.find(shit.draftsman:name(), "zone_mine") or zone_forced == 1) and shit.power <= 0.1 then
 			
 			zone_dot = 1
 			
@@ -652,6 +715,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_zone_mine)
+					shit.power = 0
 				end
 			else
 				shit_booster(shit, bone_id)
@@ -670,6 +734,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_field_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_zone_field)
+					shit.power = 0
 				end
 			else
 				shit_booster(shit, bone_id)
@@ -688,6 +753,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_ball_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_zone_ball)
+					shit.power = 0
 				end
 			else
 				shit_booster(shit, bone_id)
@@ -705,6 +771,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					fall_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last fall damage (maybe) instance was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_strike_self)
+					shit.power = 0
 				end
 			else
 				shit_booster(shit, bone_id)

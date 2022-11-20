@@ -112,37 +112,21 @@ function actor_on_first_update()
 end
 
 function actor_on_before_hit(shit)
-	if shit.type ~= 4 then
-		-- Psy stress compatibility
-		if stress_mcm then
-			if arszi_psy.get_psy_wound_stress then
-				c_psy_hit_stress_multiplier = ( stress_mcm.get_config("hit_stress") or 2.8 ) / 100
-
-				adb.get_protection(shit, "bip01_head", 0)
-				damage = adb.damage_math(shit, adb.scale, adb.total_prot, adb.af_prot, adb.bo_prot)
-				
-				local h = hit()
-				h.power = damage * c_psy_hit_stress_multiplier
-				h.direction = device().cam_dir
-				h.bone = "bip01_head"
-				h.draftsman = db.actor
-				h.impulse = 0
-				h.type = hit.telepatic
-
-				trace('Stressful Zone detected >> Dealing psy hit: %s power', h.power)
-
-				db.actor:hit(h)
-
-			end
-		end
-		return
-	end
+	if shit.type ~= 4 then return end
 
 	get_psy_res(shit)
 
 	if string.find(shit.draftsman:name(), "zone_") then
 		trace('Psy damage was dealt by an Anomaly. >> Damage x0.5')
 		shit.power = shit.power * 0.5
+	end
+
+	if shit.draftsman:id() == db.actor:id() then
+		trace('Psy damage was self inflicted >> No defenses applied.')
+		scale = 1.0
+		total_prot = 0
+		af_prot = 0
+		bo_prot = 0
 	end
 
 	damage = adb.damage_math(shit, scale, total_prot, af_prot, bo_prot) or 0
