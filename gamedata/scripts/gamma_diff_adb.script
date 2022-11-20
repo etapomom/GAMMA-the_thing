@@ -7,6 +7,7 @@ local ceil					= math.ceil
 local min                   = math.min
 local max                   = math.max
 local wepl                  = wepl_hit_effect.actor_on_before_hit
+--local utjan					= utjan_traits
 local haru					= haru_skills
 local tn                    = tonumber
 local health_gating_flag    = false
@@ -22,8 +23,10 @@ end
 function haru_skills.actor_on_before_hit(shit)
 end
 
+--[[
 function utjan_traits.actor_on_before_hit(s_hit)
 end
+--]]
 
 local function load_defaults()
 	local t = {}
@@ -402,6 +405,7 @@ function shit_booster(shit, bone_id, k_ap)
 			shit.power = shit.power * survival_resistance
 		end
 		
+		--[[
 		if utjan_traits then
 			if (string.find(is_monster, "monster")) and valid_hit and utjan_traits.traits_list["mutant_resist"].enabled then
 				shit.power = shit.power * utjan_traits.traits_list["mutant_resist"].multiplier
@@ -418,6 +422,7 @@ function shit_booster(shit, bone_id, k_ap)
 				shit.power = shit.power * utjan_traits.traits_list["lone_stalker"].dmg_resist_mult
 			end
 		end
+		--]]
 	end
 
 	damage = damage * (1 - total_prot)
