@@ -117,8 +117,8 @@ function actor_on_before_hit(shit)
 	get_psy_res(shit)
 
 	if string.find(shit.draftsman:name(), "zone_") then
-		trace('Psy damage was dealt by an Anomaly. >> Damage x0.5')
-		shit.power = shit.power * 0.5
+		trace('Psy damage was dealt by an Anomaly. >> Damage x0.25')
+		shit.power = shit.power * 0.25
 	end
 
 	if shit.draftsman:id() == db.actor:id() then

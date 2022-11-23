@@ -14,14 +14,14 @@ invul_time_zone_mine    = 30                ;; (30/120)
 invul_time_zone_field   = 30                ;; (24/120)
 invul_time_zone_ball    = 30
 invul_time_strike_self  = 60                ;; This hopefully covers all multihit fall damage instances, like jumping really fast into a bush
-health_gate_time        = 1500              ;; In miliseconds
+health_gate_time        = 500               ;; In miliseconds
 health_gate_limit       = 0.15              ;; Minimum health when health gating is active
-health_gate_trigger     = 0.5               ;; Minimum health to be able to TRIGGER health gating
-zone_field_damage       = 0.1               ;; Multiplier for damage taken from AOE anomalies (See the Hell's Walls anomaly's damage over time)
+health_gate_trigger     = 0.75              ;; Minimum health to be able to TRIGGER health gating
+zone_field_damage       = 0.05              ;; Multiplier for damage taken from AOE anomalies (See the Hell's Walls anomaly's damage over time)
 zone_field_degrade      = 0.15              ;; Multiplier for the damage to armor from AOE anomalies
-zone_field_protection   = 3.0               ;; Multiplier for the [protection] stat (see below) when being damaged by AOE anomalies
+zone_field_protection   = 2.5               ;; Multiplier for the [protection] stat (see below) when being damaged by AOE anomalies
 zone_mine_damage        = 1.0               ;; These 3 are for the weird damage over time that most anomalies have
-zone_mine_degrade       = 0.5               ;; Not to be confused with the FIELD ANOMALIES, please.
+zone_mine_degrade       = 0.25              ;; Not to be confused with the FIELD ANOMALIES, please.
 zone_mine_protection    = 1.0
 zone_ball_damage        = 1.0               ;; This is for fireballs (See the Comet anomaly in the Dark Valley)
 zone_ball_degrade       = 1.0
@@ -106,52 +106,52 @@ hit_type                = 5
 immunity 			    = wound_immunity
 protection 			    = Wound
 booster_type_def 	    = 16
-adjuster 			    = 0.85
-limiter 			    = 0.95
-absorb				    = -0.1
+adjuster 			    = 0.58
+limiter 			    = 0.90
+absorb				    = -0.15
 bleed				    = 1.0
-scale				    = 0.5
+scale				    = 0.65
 arti				    = 1.0
-booster                 = 2.0
+booster                 = 1.0
 
 [adb_dmg_6]
 hit_type                = 6
 immunity 			    = fire_wound_immunity
 protection 			    = FireWound
 booster_type_def 	    = 15
-adjuster 			    = 0.85
+adjuster 			    = 0.8
 limiter 			    = 0.90
 absorb				    = 0.0
 bleed				    = 1.0
-scale			    	= 0.75
+scale			    	= 0.8
 arti			    	= 1.0
-booster                 = 2.0
+booster                 = 1.0
 
 [adb_dmg_7]
 hit_type                = 7
 immunity			    = strike_immunity
 protection			    = Strike
 booster_type_def	    = 14
-adjuster			    = 1.25
-limiter				    = 0.80
+adjuster			    = 0.55
+limiter				    = 0.70
 absorb				    = 0.05
-bleed				    = 0.15
-scale				    = 0.75
+bleed				    = 0.25
+scale				    = 1.0
 arti				    = 1.0
-booster                 = 2.0
+booster                 = 1.0
 
 [adb_dmg_8]
 hit_type                = 8
 immunity		    	= explosion_immunity
 protection			    = Explosion
 booster_type_def	    = 13
-adjuster			    = 0.4
-limiter				    = 0.85
-absorb			    	= 1.0
-bleed			    	= 0.5
+adjuster			    = 0.45
+limiter				    = 0.75
+absorb			    	= 0.5
+bleed			    	= 1.0
 scale			    	= 1.0
 arti			    	= 1.0
-booster                 = 3.0
+booster                 = 1.0
 
 [adb_dmg_9]:adb_dmg_5
 [adb_dmg_10]:adb_dmg_0

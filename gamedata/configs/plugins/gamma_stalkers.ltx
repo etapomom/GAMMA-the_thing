@@ -3,7 +3,7 @@
 ;;			  STALKERS PLUGIN				;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;											;;
-;; [gbo_(stalker section]					;;
+;; [gbo_(stalker section)]					;;
 ;; armor = (float number)					;;
 ;; spec_armor = (float number)				;;
 ;; dmg_reduction = 0.0 <= float < 1.0 		;;
@@ -13,17 +13,29 @@
 ;; the original script. Here you can define	;;
 ;; that value for other characters.			;;
 ;;											;;
-;; NOTE: This IGNORES MCM defined options	;;
-;; such as UNISG AP Reduction.				;;
-;;											;;
 ;; (armor) is a multiplier for base armor	;;
 ;; durability. 								;;
 ;;											;;
+;; [faction_(faction name)]                 ;;
+;; ap_res = (float)                         ;;
+;; dmg_res = (float)                        ;;
+;;                                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+[faction_base]
+ap_res          = 1
+dmg_res         = 1
+
+[faction_isg]:faction_base
+ap_res          = 0.5
+dmg_res         = 0.75
+
+[faction_greh]:faction_base
+dmg_res         = 0.15
+
 [gbo_monolith_eidolon]
-spec_armor		= 8.0
-dmg_reduction	= 0.2
+armor      		= 10.0
+dmg_reduction	= 0.15
 
 [gbo_greh_squad_leader]
 armor			= 2.0

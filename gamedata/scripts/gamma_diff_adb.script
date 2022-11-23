@@ -9,9 +9,11 @@ local max                   = math.max
 local wepl                  = wepl_hit_effect.actor_on_before_hit
 --local utjan					= utjan_traits
 local haru					= haru_skills
-local tn                    = tonumber
 local health_gating_flag    = false
 local health_gating_active  = false
+
+local FX_Play 		= gamma_diff_utils.FX_Play
+local play_sound	= gamma_diff_utils.play_sound
 
 local ini_adb               = ini_file_ex("plugins\\gamma_actor.ltx")
 
@@ -21,6 +23,15 @@ end
 
 -- Kill Haruka's Skills to ensure it works too
 function haru_skills.actor_on_before_hit(shit)
+end
+
+function tn(number)
+	return tonumber(string.format("%.3f", number))
+end
+
+local function rnd(number)
+	--return _g.round_idp(number, 2)
+	return number
 end
 
 --[[
@@ -51,8 +62,14 @@ local function load_settings()
 end
 
 local function trace(str, ...)
-	if settings.debug then
+	if settings.debug == 2 then
 		printf("[G.A.M.M.A. THE THING] ADB: " .. str, ...)
+	end
+end
+
+local function combat_log(str, ...)
+	if settings.debug == 1 then
+		printf("" .. str, ...)
 	end
 end
 
@@ -87,11 +104,11 @@ function damage_math(shit, scale, total_prot, af_prot, bo_prot)
 
 	if adb_classic == 1 then
 		dm = (shit.power * scale) * (1 - (total_prot + af_prot + bo_prot))
-		trace('Damage: %s >> (%s x %s) x (1.0 - (%s + %s + %s + %s))', dm, shit.power, sc, tp, ap, bp)
+		trace('Damage: %s >> (%s x %s) x (1.0 - (%s + %s + %s + %s))', tn(dm), tn(shit.power), tn(sc), tn(tp), tn(ap), tn(bp))
 		return dm
 	else
 		dm = (shit.power * scale) * (1 - total_prot) * (1 - af_prot) * (1 - bo_prot)
-		trace('Damage: %s >> (%s x %s) x (1.0 - %s) x (1.0 - %s) x (1.0 - %s)', dm, shit.power, sc, tp, ap, bp)
+		trace('Damage: %s >> (%s x %s) x (1.0 - %s) x (1.0 - %s) x (1.0 - %s)', tn(dm), tn(shit.power), tn(sc), tn(tp), tn(ap), tn(bp))
 		return dm
 	end
 
@@ -153,8 +170,8 @@ difficulty_multiplier =
 degrade_multiplier =
 {
 	[1] = 0.7,
-	[2] = 0.8,
-	[3] = 0.9,
+	[2] = 0.85,
+	[3] = 1.0,
 	[4] = 1.0,
 }
 
@@ -204,7 +221,7 @@ function get_protection(shit, bone_id, k_ap)
 	total_prot = 0.0
 	bonus_durability = 0.0
 	bonus_durability_h = 0.0
-	headhsot = 0
+	headshot = 0
 	elem = 0
 
 	if hitboxes[bone_id] == "head" then
@@ -228,16 +245,23 @@ function get_protection(shit, bone_id, k_ap)
 		
 			if shit.type == hit.fire_wound then
 				armor_protection = c_outfit:GetBoneArmor( BoneID["bip01_spine"] ) * cond * adjuster or 0
+				bonus_durability = c_outfit:GetBoneArmor( BoneID["bip01_spine"] ) * adjuster or 0
 			else
 				armor_protection = c_outfit:GetDefHitTypeProtection(shit.type) * cond * adjuster or 0
+				bonus_durability = c_outfit:GetDefHitTypeProtection(shit.type) * adjuster or 0
 			end
+
+			armor_protection = rnd(armor_protection)
+			bonus_durability = rnd(bonus_durability)
 			
 			armor_hit_frac = ini_sys:r_float_ex(outfit:section(), "hit_fraction_actor") or 1
 			armor_bone_value = (1 - armor_hit_frac) * cond * 0.75 or 0
 			
-			trace('Armor >> Protection: %s // Bonus durability: %s', armor_protection, bonus_durability)
-			if shit.type == hit.fire_wound then
-				trace('Armor >> BR amount: %s', armor_bone_value)
+			if (headshot == 0 and elem == 0) or elem == 1 then
+				trace('Armor >> Protection: %s // Bonus durability: %s', tn(armor_protection), tn(bonus_durability))
+				if shit.type == hit.fire_wound then
+					trace('Armor >> BR amount: %s', tn(armor_bone_value))
+				end
 			end
 		end
 	end
@@ -254,18 +278,25 @@ function get_protection(shit, bone_id, k_ap)
 			
 			if shit.type == hit.fire_wound then
 				helmet_protection = c_helmet:GetBoneArmor( BoneID["bip01_head"] ) * cond * adjuster or 0
+				bonus_durability_h = c_helmet:GetBoneArmor( BoneID["bip01_head"] ) * adjuster or 0
 			else
 				helmet_protection = c_helmet:GetDefHitTypeProtection(shit.type) * cond * adjuster or 0
+				bonus_durability_h = c_helmet:GetDefHitTypeProtection(shit.type) * adjuster or 0
 			end
+
+			helmet_protection = rnd(helmet_protection)
+			bonus_durability_h = rnd(bonus_durability_h)
 			
 			helmet_hit_frac = ini_sys:r_float_ex(helmet:section(), "hit_fraction_actor") or 1
 			helmet_bone_value = (1 - helmet_hit_frac) * cond or 0
-
-			trace('Helmet >> Protection: %s // Bonus durability: %s', helmet_protection, bonus_durability_h)
-			if shit.type == hit.fire_wound then
-				trace('Helmet >> BR amount: %s', helmet_bone_value)
+			
+			if (headshot == 1 and elem == 0) or elem == 1 then
+				trace('Helmet >> Protection: %s // Bonus durability: %s', tn(helmet_protection), tn(bonus_durability_h))
+				if shit.type == hit.fire_wound then
+					trace('Helmet >> BR amount: %s', tn(helmet_bone_value))
+				end
 			end
-        end
+		end
 	end
 
 	if elem == 0 then
@@ -317,11 +348,11 @@ function get_protection(shit, bone_id, k_ap)
 			artefacts_ap_res = artefacts_ap_res + af_bone_value
 		end	
 	)
-	artefacts_protection = artefacts_protection * 0.6 -- scale to the displayed inventory values more or less
-	artefacts_protection = artefacts_protection * arti
+	--artefacts_protection = artefacts_protection * 0.6 -- scale to the displayed inventory values more or less
+	artefacts_protection = rnd(artefacts_protection * arti)
 
 	if artefacts_ap_res ~= 0 then
-		trace('Artefacts BR: %s >> Total BR: %s', artefacts_ap_res, armor_bone_value + artefacts_ap_res)
+		trace('Artefacts BR: %s >> Total BR: %s', tn(artefacts_ap_res), tn(armor_bone_value + artefacts_ap_res))
 	end
 
 	-- Booster protection
@@ -338,19 +369,27 @@ function get_protection(shit, bone_id, k_ap)
 	no_pen = 0 
 	if shit.type == hit.fire_wound then
 		if headshot == 1 then
-			trace('Penetration math >> Ammo pen: %s // Helmet BR: %s', k_ap, helmet_bone_value)
+			trace('Penetration math >> Ammo pen: %s // Helmet BR: %s', tn(k_ap), tn(helmet_bone_value))
 			if k_ap < helmet_bone_value then
 				helmet_protection = helmet_protection * 0.2 + helmet_bone_value * 1.3
-				trace("Bullet caught! >> Protection: %s", helmet_protection)
+				trace("Bullet caught! >> Protection: %s", tn(helmet_protection))
 				no_pen = 1
 			end
 		else
 			armor_bone_value = armor_bone_value + artefacts_ap_res
-			trace('Penetration math >> Ammo pen: %s // Armor BR: %s', k_ap, armor_bone_value)
+			trace('Penetration math >> Ammo pen: %s // Armor BR: %s', tn(k_ap), tn(armor_bone_value))
 			if k_ap < armor_bone_value then
 				armor_protection = armor_protection * 0.2 + armor_bone_value * 1.3
-				trace("Bullet caught! >> Protection: %s", armor_protection)
+				trace("Bullet caught! >> Protection: %s", tn(armor_protection))
 				no_pen = 1
+			end
+		end
+
+		if settings.particles == 2 then
+			if no_pen == 1 then
+				FX_Play("pfx_armor", db.actor, shit, bone_id)
+			else
+				FX_Play("pfx_flesh", db.actor, shit, bone_id)
 			end
 		end
 	end
@@ -384,8 +423,8 @@ function get_protection(shit, bone_id, k_ap)
 	artefacts_protection = min(artefacts_protection, limiter and limiter or 1.00)
 	booster_protection = min(booster_protection, limiter and limiter or 1.00)
 
-	trace('Total protection (physical): %s >> (%s + %s)', total_prot, helmet_protection, armor_protection)
-	trace('Total protection (af+boost): %s // %s', artefacts_protection, booster_protection)
+	trace('Total protection (physical): %s >> (%s + %s)', tn(total_prot), tn(helmet_protection), tn(armor_protection))
+	trace('Total protection (af+boost): %s // %s', tn(artefacts_protection), tn(booster_protection))
 
 	af_prot = artefacts_protection
 	bo_prot = booster_protection
@@ -405,7 +444,6 @@ function shit_booster(shit, bone_id, k_ap)
 			shit.power = shit.power * survival_resistance
 		end
 		
-		--[[
 		if utjan_traits then
 			if (string.find(is_monster, "monster")) and valid_hit and utjan_traits.traits_list["mutant_resist"].enabled then
 				shit.power = shit.power * utjan_traits.traits_list["mutant_resist"].multiplier
@@ -422,7 +460,6 @@ function shit_booster(shit, bone_id, k_ap)
 				shit.power = shit.power * utjan_traits.traits_list["lone_stalker"].dmg_resist_mult
 			end
 		end
-		--]]
 	end
 
 	damage = damage * (1 - total_prot)
@@ -439,7 +476,7 @@ function shit_booster(shit, bone_id, k_ap)
 
 	damage = damage * zone_mult
 	
-	degrade_math = (damage * (0.07 * (1.0 + absorb))) * settings.armor_dur_ac
+	degrade_math = (damage * (0.07 * (1.0 + absorb)))
 	degrade_math = degrade_math * degrade_multiplier[game_num]
 
 	damage = damage_math(shit, scale, total_prot, af_prot, bo_prot)
@@ -458,7 +495,7 @@ function shit_booster(shit, bone_id, k_ap)
 			h.impulse = 0
 			h.type = hit.telepatic
 
-			trace('Stressful Zone detected >> Dealing psy hit: %s power', h.power)
+			trace('Stressful Zone detected >> Dealing psy hit: %s power', tn(h.power))
 
 			db.actor:hit(h)
 
@@ -468,7 +505,7 @@ function shit_booster(shit, bone_id, k_ap)
 	if fall_damage == 1 then
 		degrade_math = 0
 		bleed = bleed * 2
-		damage = damage * 0.5
+		damage = damage * 2
 	end
 	
 	if shit.type == hit.telepatic or shit.type == hit.radiation then
@@ -485,37 +522,29 @@ function shit_booster(shit, bone_id, k_ap)
 	degrade_o = 0
 	degrade_h = 0
 
-	if elem == 1 then
-		headshot = 1
-	end
-
-	if headshot == 1 then
+	if (headshot == 1 and elem == 0) or elem == 1 then
 		helmet = db.actor:item_in_slot(12)
         if helmet then
-			degrade_math = degrade_math / (1.0 - min(bonus_durability_h, (1 - smallest)))
+			degrade_math = degrade_math / (1.0 + max(smallest, bonus_durability_h))
 		    cond = helmet:condition()
 		    helmet:set_condition(cond - degrade_math)
 			degrade_h = degrade_math
 		end
 	end
 
-	if elem == 1 then
-		headshot = 0
-	end
-	
-	if headshot == 0 then
+	if (headshot == 0 and elem == 0) or elem == 1 then
 		armor = db.actor:item_in_slot(7)
         if armor then
-			degrade_math = degrade_math / (1.0 - min(bonus_durability, (1 - smallest)))
+			degrade_math = degrade_math / (1.0 + max(smallest, bonus_durability))
 		    cond = armor:condition()
 		    armor:set_condition(cond - degrade_math)
 			degrade_o = degrade_math
         end
 	end
 
-	trace('Armor degradation: %s // Helmet degradation: %s', degrade_o, degrade_h)
+	trace('Armor degradation: %s // Helmet degradation: %s', tn(degrade_o), tn(degrade_h))
 	
-	shit.power = 0
+	shit.power = 0.0
 	
 	health_gating_flag = health_gating_active or (db.actor.health - damage <= max(tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_trigger") or 1), 0))
 	
@@ -534,25 +563,45 @@ function shit_booster(shit, bone_id, k_ap)
 			db.actor:set_health_ex(db.actor.health - damage)
 		else
 			min_health = max(tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_limit") or 1), 0)
-			if db.actor.health - damage <= min_health then
-				db.actor:set_health_ex(min_health)
-				trace('HEALTH GATED SUCCESSFULLY')
+			if self_inflicted == 0 then
+				if db.actor.health - damage <= min_health then
+					db.actor:set_health_ex(min_health)
+					trace('HEALTH GATED SUCCESSFULLY')
+				else
+					db.actor:set_health_ex(max( (db.actor.health - damage), min_health))
+				end
 			else
-				db.actor:set_health_ex(max( (db.actor.health - damage), min_health))
+				db.actor:set_health_ex(db.actor.health - damage)
+				trace('HEALTH GATE BYPASSED (Self inflicted)')
 			end
 		end
 	else
 		db.actor:change_radiation(damage)
 	end
-	
-	damage = damage * bleed
-	
+
 	if zone_dot == 0 then
 		if no_pen == 1 then
-			db.actor:cast_Actor():conditions():AddWound(damage * settings.bleed_stop, hit_type, bone_id)
+			db.actor:cast_Actor():conditions():AddWound(damage * bleed * 0.25, hit_type, bone_id)
 		else
-			db.actor:cast_Actor():conditions():AddWound(damage * settings.bleed_pen, hit_type, bone_id)
+			db.actor:cast_Actor():conditions():AddWound(damage * bleed, hit_type, bone_id)
 		end
+	end
+
+	if damage >= 0.005 and shit.type ~= hit.radiation then
+		if shit.type == hit.fire_wound then
+			combat_log('%s || Struck by %s (%s) with %s (%s) in the %s for %s damage.', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec, hitboxes[bone_id] or "whole body", damage)
+		else
+			combat_log('%s || Struck by %s (%s) for %s damage (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), damage, hit_type_id[shit.type])
+		end
+	end
+
+	if db.actor.health < 0 then
+		db.actor.health = 0
+	end
+
+	if db.actor.health <= 0 and db.actor.health - damage <= -0.5 and settings.gibs == 2 then
+		FX_Play("pfx_gibs", db.actor, shit, bone_id)
+		play_sound("gore\\hit_zombie_"..math.random(23), 1.0, db.actor)
 	end
 end
 
@@ -573,13 +622,17 @@ function actor_on_before_hit(shit, bone_id, flags)
 
 	if shit.type == 4 then return end
 
+	self_inflicted = 0
+	if shit.draftsman:id() == db.actor:id() then
+		self_inflicted = 1
+	end
+
 	actor = db.actor
 	shooter = shit.draftsman
 	balancer = "adb_balance"
 	
 	zone_dot = 0
 	zone_field = 0
-	shit.power = shit.power * settings.actor_hp
 	
 		gameplay = alife_storage_manager.get_state().diff_game
 		if not (type(gameplay) == "table") then
@@ -601,7 +654,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 	wepl(shit, bone_id, flags)			-- Also call wepl before shit.power = 0 to ensure it actually works.
 
 	trace(' ')
-	trace('You got hit! >> tg: %s // power: %s // where: %s // mult: %s // who: %s (%s)', time_global(), shit.power, hitboxes[bone_id] or "whole body", difficulty_multiplier[game_num], shit.draftsman:section(), shit.draftsman:id())
+	trace('You got hit! >> tg: %s // power: %s // where: %s // mult: %s // who: %s (%s)', time_global(), tn(shit.power), hitboxes[bone_id] or "whole body", difficulty_multiplier[game_num], shit.draftsman:section(), shit.draftsman:id())
 
 	invul_frac 				= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_frac") or 1), ceil(smallest))
 	invul_time_bullet 		= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_bullet") or 1), 0)
@@ -622,6 +675,10 @@ function actor_on_before_hit(shit, bone_id, flags)
 		local ammo_list = utils_item.get_ammo(sec, wpn_id)
 		local ammo_section = ammo_list[ammo_type_number+1]
 
+		if string.find(sec, "helicopter_strong") or string.find(sec, "helicopter_weak") or string.find(sec, "mounted_weapon") or string.find(sec, "stationary_gun") then
+			ammo_section = ini_sys:r_string_ex(sec, "ammo_class")
+		end
+
 		k_ap = ini_sys:r_float_ex(ammo_section, "k_ap") or 0
 
 		if ammo_section == nil then return end
@@ -639,19 +696,22 @@ function actor_on_before_hit(shit, bone_id, flags)
 		-- Trim the ammo_section name
 		ammo_section = string.gsub(ammo_section, "ammo_", "")
 		ammo_section = string.gsub(ammo_section, "_bad", "")
-		ammo_section = string.gsub(ammo_section, "_very", "")
+		ammo_section = string.gsub(ammo_section, "_verybad", "")
+
+		wpn_sec = sec or "something"
+		amm_sec = ammo_section or "a bullet maybe"
 		
 		if ini_adb:line_exist(balancer, ammo_section) then
 			ammo_mult = (tonumber(ini_adb:r_string_ex(balancer, ammo_section) or 1))
 			shit.power = shit.power * ammo_mult
-			trace('Ammo has multiplier under [adb_balance] >> ammo_mult: x%s', ammo_mult)
+			trace('Ammo has multiplier under [adb_balance] >> ammo_mult: x %s', ammo_mult)
 		end
 		
 		body_part = hitboxes[bone_id]
 		body_mult = hitbox_mult[body_part] or 0.5
 		shit.power = shit.power * body_mult
 
-		trace('Body part multiplier >> body_mult: x%s', body_mult)
+		trace('Body part multiplier >> body_mult: x %s', body_mult)
 
 		if buckshot or ricochet == 0 then
 			shit_booster(shit, bone_id, k_ap)
@@ -663,7 +723,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				shit_booster(shit, bone_id, k_ap)
 				hit_last[shit.draftsman:id()] = time_global()
 			else
-				trace('Last hit was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_bullet)
+				trace('Last hit was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_bullet))
 				shit.power = 0
 			end
 		else
@@ -719,7 +779,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					shit_booster(shit, bone_id)
 					zone_last[shit.draftsman:id()] = time_global()
 				else
-					trace('Last damage tick was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_zone_mine)
+					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_mine))
 					shit.power = 0
 				end
 			else
@@ -738,7 +798,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					shit_booster(shit, bone_id)
 					zone_field_last[shit.draftsman:id()] = time_global()
 				else
-					trace('Last damage tick was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_zone_field)
+					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_field))
 					shit.power = 0
 				end
 			else
@@ -757,7 +817,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					shit_booster(shit, bone_id)
 					zone_ball_last[shit.draftsman:id()] = time_global()
 				else
-					trace('Last damage tick was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_zone_ball)
+					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_ball))
 					shit.power = 0
 				end
 			else
@@ -769,13 +829,12 @@ function actor_on_before_hit(shit, bone_id, flags)
 		end
 
 		if shit.draftsman:id() == db.actor:id() and shit.type == hit.strike then
-
 			if fall_last[shit.draftsman:id()] then	-- Tabling your own ID??? NONSENSE
 				if time_global() - fall_last[shit.draftsman:id()] >= (1000/invul_frac) * invul_time_strike_self then
 					shit_booster(shit, bone_id)
 					fall_last[shit.draftsman:id()] = time_global()
 				else
-					trace('Last fall damage (maybe) instance was less than %s ms ago, SKIPPING!', (1000/invul_frac) * invul_time_strike_self)
+					trace('Last fall damage (maybe) instance was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_strike_self))
 					shit.power = 0
 				end
 			else

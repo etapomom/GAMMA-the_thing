@@ -29,8 +29,8 @@ end
 local settings = load_defaults()
 
 local function trace(str, ...)
-	if settings.debug then
-		printf("[G.A.M.M.A. THE THING]: UTILS >>> " .. str, ...)
+	if settings.debug == 2 then
+		printf("[G.A.M.M.A. THE THING] UTILS: " .. str, ...)
 	end
 end
 

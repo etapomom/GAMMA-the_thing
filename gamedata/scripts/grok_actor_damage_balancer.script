@@ -24,7 +24,8 @@ end
 
 function get_outfit_immunity(obj, immunity)
 	if obj then
-		immu_sec = ini_sys:r_string_ex(obj:section(), "immunities_sect")
-		return ini_sys:r_float_ex(immu_sec, immunity) or 0
+		--immu_sec = ini_sys:r_string_ex(obj:section(), "immunities_sect")
+		--return ini_sys:r_float_ex(immu_sec, immunity) or 0
+		return 0
 	end
 end
