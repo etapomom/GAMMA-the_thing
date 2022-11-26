@@ -2,6 +2,15 @@ local FX_Play 		= gamma_diff_utils.FX_Play
 local get_Barrel 	= gamma_diff_utils.get_Barrel
 local play_sound	= gamma_diff_utils.play_sound
 
+local floor			= math.floor
+local ceil			= math.ceil
+local clamp			= _g.clamp
+local min			= math.min
+local max			= math.max
+local smallest				= 0.0000001
+
+local ini_adb               = ini_file_ex("plugins\\gamma_actor.ltx")
+
 local function load_defaults()
 	local t = {}
 	local op = gamma_diff_mcm.op
@@ -37,10 +46,9 @@ local function combat_log(str, ...)
 end
 
 -- Tables and plugin parsing.
-custom_bone_value	= {} -- this a table with each identifier being npcid_boneid, these returns custom bonearmor value. It is filled, alongside the other custom tables, after every new bone hit
-custom_bone_ap		= {} 
-custom_bone_hf		= {} 
-custom_bone_dmg		= {}
+armor_hp		= {} -- this a table with each identifier being npcid_boneid, these returns custom bonearmor value. It is filled, alongside the other custom tables, after every new bone hit
+armor_ap		= {} 
+armor_hf		= {} 
 ini_capture			= ini_file_ex("creatures\\grok_bo_models_capture.ltx")
 ini_bones			= ini_file_ex("creatures\\grok_bo_bone_profiles.ltx")
 ini_damage			= ini_file_ex("creatures\\damages.ltx")
@@ -48,6 +56,8 @@ ini_stalkers		= ini_file_ex("plugins\\gamma_stalkers.ltx")
 ini_particles		= ini_file_ex("plugins\\gamma_particles.ltx")
 leg_meta_sniper_null = 1
 sniper_bad_bone_shit_reduce = 1
+
+npc_last = {}
 
 difficulty_multiplier =
 {
@@ -124,12 +134,26 @@ Bone_IDs =
 	[36] =	"bip01_r_forearm",
 }
 
-PBA_obh = perk_based_artefacts.npc_on_before_hit
-function perk_based_artefacts.npc_on_before_hit(npc, s_hit, bone_id, flags)
+function perk_based_artefacts.npc_on_before_hit(npc, shit, bone_id, flags) end
+function perk_based_artefacts.npc_on_hit_callback(npc, amount, local_direction, who, bone_index) end
+function perk_based_artefacts.npc_on_death_callback(npc, who) end
+
+local pba = perk_based_artefacts
+function PBA_obh(npc, shit, bone_id, flags)
+	trace('Firing PBA >> npc_on_before_hit')
+	pba.last_npc_hit = hit(shit)
+	pba.last_npc_hit_bone_index = bone_id
+	pba.process_artefacts(pba.artefact_on_npc_before_hit_functions, npc, shit, bone_id, flags)
 end
 
-PBA_odc = perk_based_artefacts.npc_on_death_callback
-function perk_based_artefacts.npc_on_death_callback(npc, who)
+function PBA_ohc(npc, amount, local_direction, who, bone_index)
+	trace('Firing PBA >> npc_on_hit_callback')
+	pba.process_artefacts(pba.artefact_on_npc_hit_functions, npc, amount, local_direction, who, bone_index, pba.last_npc_hit)
+end
+
+function PBA_odc(npc, who)
+	trace('Firing PBA >> npc_on_death_callback')
+	pba.process_artefacts(pba.artefact_on_npc_death_functions, npc, who, pba.last_npc_hit, pba.last_npc_hit_bone_index)
 end
 
 function npc_on_before_hit(npc, shit, bone_id, flags)
@@ -175,7 +199,35 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	local npc_sec 			= "gbo_" .. npc:section()
 	
 	local barrel_condition_corrected = get_Barrel(wpn)
-	
+
+	local bone_name			= Bone_IDs[bone_id]
+
+	invul_frac 				= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_frac") or 1), ceil(smallest))
+	invul_time_bullet 		= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_bullet") or 1), 0)
+
+	buckshot = ini_sys:r_float_ex(ammo_section, "buck_shot") and ini_sys:r_float_ex(ammo_section, "buck_shot") or 1
+	ricochet = ini_sys:r_bool_ex(ammo_section, "allow_ricochet") and ini_sys:r_bool_ex(ammo_section, "allow_ricochet") or true
+	if buckshot > 1 then
+		trace('Ammo has multiple pellets >> buckshot: %s', buckshot)
+	end
+
+	if not (buckshot > 1 or ricochet == 0) then
+		if npc_last[npc:id()] then
+			if time_global() - npc_last[npc:id()] >= (1000/invul_frac) * invul_time_bullet then
+				npc_last[npc:id()] = time_global()
+			else
+				trace('Last hit on %s was less than %s ms ago, SKIPPING!', npc:name(), (1000/invul_frac) * invul_time_bullet)
+				combat_log('%s || HIT INVALID || You tried to hit %s (%s) with %s (%s).', time_global(), npc:section(), npc:id(), sec, ammo_section)
+				shit.power = 0.0
+				return
+			end
+		else
+			npc_last[npc:id()] = time_global()
+		end
+	end
+
+	trace('%s || %s (%s) >> hit: %s // k_hit: %s // k_ap: %s', time_global(), sec, ammo_section, wpn_hit_power, k_hit, k_ap)
+
 	-- Disable sniper rounds leg-shot bonus
 	local kind = ini_sys:r_string_ex(sec, "kind")
 	if 	kind == "w_sniper" and
@@ -187,87 +239,68 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		 string.find(ammo_section, "50_bmg") 		or
 		 string.find(ammo_section, "gauss")) 		then
 			leg_meta_sniper_null = 0
+			trace('Weapon is a sniper! >> No leg-shot bonus.')
 	end
 	
 	local npc_id = npc:id()
-	local custom_bone_name = Bone_IDs[bone_id] 
-	
-	if not custom_bone_name then
-		custom_bone_name = math.random(52,55) 
-		if custom_bone_name == 52 then
-			bone_id = 22
-			custom_bone_name = "bip01_l_forearm"
-		elseif custom_bone_name == 53 then
-			bone_id = 35
-			custom_bone_name = "bip01_r_forearm"
-		elseif custom_bone_name == 54 then
-			bone_id = 21
-			custom_bone_name = "bip01_l_upperarm"
-		elseif custom_bone_name == 55 then
-			bone_id = 34
-			custom_bone_name = "bip01_r_upperarm"
-		end
-	end
-	
-	local custom_bone_id = (npc_id.."_"..bone_id)
 
-	local body_part = hitboxes[bone_id]
-	local body_mult = stalker_damage[body_part] or 1.0
-	
-	if custom_bone_value[custom_bone_id] then
-		trace("Custom bone found. Loading custom_bone values")
+	if armor_hp[npc_id] then
+		trace('Armor is already loaded.')
 	else
-		local bone_damage_multiplier = stalker_damage[custom_bone_name]
-		custom_bone_dmg[custom_bone_id] = tonumber(bone_damage_multiplier)
-		
 		local npc_viz = npc:get_visual_name()
-		trace("NPC visual model: %s",npc_viz)
-
 		if not ini_capture:section_exist(npc_viz) then
-			trace("NPC model doesn't have a bone profile, loading berill no helm config")
+			trace('NPC model does not have a profile defined. Defaulting to Berill/No Helmet.')
 			npc_viz = "actors\\stalker_bandit\\stalker_bandit_berill_nohelm_1"
 		end
-
-		local npc_armor_path = ini_capture:r_string_ex(npc_viz,"model_path")	
-		ini_npc_armor = ini_file(npc_armor_path)
-		local npc_armor_section = ini_npc_armor:r_string_ex('bone_protection','bones_protection_sect')
-		if (tonumber(bone_id) >= 14 and tonumber(bone_id) <= 19) then -- headshot
-			npc_bone_profile_name = ini_bones:r_string_ex(npc_armor_section,"head_profile")
-		else -- bodyshot
-			npc_bone_profile_name = ini_bones:r_string_ex(npc_armor_section,"bone_profile")
-		end
-		local tmp1 	= ini_damage:r_string_ex(npc_bone_profile_name,custom_bone_name)
-		local p 	= str_explode(tmp1,",")
-
-		custom_bone_value[custom_bone_id] = tonumber(p[2])
 		
+		local npc_armor_path = ini_capture:r_string_ex(npc_viz, "model_path")
+		ini_npc_armor = ini_file(npc_armor_path)
+		local npc_armor_section = ini_npc_armor:r_string_ex("bone_protection", "bones_protection_sect")
+
+		local head_armor = ini_bones:r_string_ex(npc_armor_section, "head_profile") or "head_damage_00"
+		local body_armor = ini_bones:r_string_ex(npc_armor_section, "bone_profile") or "body_damage_020"
+
+		local tmp1 = ini_damage:r_string_ex(head_armor, "bip01_head")
+		local tmp2 = ini_damage:r_string_ex(body_armor, "bip01_spine")
+
+		local ha = str_explode(tmp1, ",")
+		local ba = str_explode(tmp2, ",")
+
+		armor_hp[npc_id] = tonumber(ha[2]) + tonumber(ba[2])
+		trace('Initial NPC armor: %s', armor_hp[npc_id])
+
 		if ini_stalkers:section_exist(npc_sec) then
 			if ini_stalkers:line_exist(npc_sec, "spec_armor") then
-				custom_bone_value[custom_bone_id] = tonumber(ini_stalkers:r_string_ex(npc_sec, "spec_armor"))
-			else
-				custom_bone_value[custom_bone_id] = 1
+				spec_armor = tonumber(ini_stalkers:r_string_ex(npc_sec, "spec_armor"))
+				armor_hp[npc_id] = spec_armor
+				trace('NPC has bonus armor defined in [gamma_stalkers] >> Armor: %s', spec_armor)
 			end
 		end
-		
-		local npc_pfx_sec = "pfx_stalker_" .. npc:section()
-		if ini_particles:section_exist(npc_pfx_sec) then
-			FX_Play(npc_pfx_sec, npc, shit, custom_bone_name)
-		end
-		
-		local npc_hit_fraction = ini_bones:r_string_ex(npc_armor_section,"hit_fraction_npc")
-		custom_bone_hf[custom_bone_id] = tonumber(npc_hit_fraction)
 
-		local npc_ap_scale = ini_bones:r_string_ex(npc_armor_section,"ap_scale")
-		custom_bone_ap[custom_bone_id] = tonumber(npc_ap_scale)
+		local npc_hit_fraction = ini_bones:r_string_ex(npc_armor_section, "hit_fraction_npc")
+		local npc_ap_scale = ini_bones:r_string_ex(npc_armor_section, "ap_scale")
+
+		armor_hf[npc_id] = npc_hit_fraction
+		armor_ap[npc_id] = npc_ap_scale
+
+		trace('NPC Hit Fraction: %s // NPC AP Scale: %s', npc_hit_fraction, npc_ap_scale)
 	end
+
+	local npc_pfx_sec = "pfx_stalker_" .. npc:section()
+	if ini_particles:section_exist(npc_pfx_sec) then
+		FX_Play(npc_pfx_sec, npc, shit, bone_name)
+	end
+
+	local body_part = hitboxes[bone_id]
+	local body_mult = stalker_damage[body_part] or stalker_damage["torso"]
 
 	sinres = 1
 	isgres = 1
 
 	local gbo_faction = "faction_" .. faction
-	if ini_stalkers:section_exist("faction" .. faction) then
-		sinres = ini_stalkers:r_float_ex(gbo_faction, "dmg_res") or 1
-		isgres = ini_stalkers:r_float_ex(gbo_faction, "ap_res") or 1
+	if ini_stalkers:section_exist(gbo_faction) then
+		sinres = ini_stalkers:r_float_ex(gbo_faction, "dmg_res") and ini_stalkers:r_float_ex(gbo_faction, "dmg_res") or 1
+		isgres = ini_stalkers:r_float_ex(gbo_faction, "ap_res") and ini_stalkers:r_float_ex(gbo_faction, "ap_res") or 1
 		sinres = math.max(0.05, sinres)
 		isgres = math.max(0.05, isgres)
 
@@ -281,13 +314,14 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	end
 		
 	if ini_particles:section_exist("pfx_faction_" .. faction) then
-		FX_Play("pfx_faction_" .. faction, npc, shit, custom_bone_name)
+		FX_Play("pfx_faction_" .. faction, npc, shit, bone_name)
 	end
 	
-	local custom_bone_armor 		= custom_bone_value[custom_bone_id]
-	local custom_bone_dmg_mult 		= body_mult
-	local custom_bone_ap_scale 		= custom_bone_ap[custom_bone_id]
-	local custom_bone_hitfraction 	= custom_bone_hf[custom_bone_id]
+	local custom_armor 			= armor_hp[npc_id]
+	local custom_ap_scale 		= armor_ap[npc_id]
+	local custom_hitfraction 	= armor_hf[npc_id]
+
+	trace('Current armor: %s', armor_hp[npc_id])
 	
 	if body_part == "legs" then 
 		if string.find(ammo_section, "buck") or string.find(ammo_section, "shrapnel") then
@@ -305,12 +339,14 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		end
 	end
 	
-	local k_ap = k_ap * custom_bone_ap_scale * barrel_condition_corrected
+	local k_ap = k_ap * custom_ap_scale * barrel_condition_corrected
 	k_ap = k_ap / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * isgres
 
 	trace('Final AP >> %s', k_ap)
 
-	shit.power = wpn_hit_power / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * k_hit * custom_bone_dmg_mult * custom_bone_ap_scale * 1.1 * barrel_condition_corrected * sinres
+	shit.power = wpn_hit_power / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * k_hit * body_mult * custom_ap_scale * 1.1 * barrel_condition_corrected * sinres
+
+	trace('Raw damage: %s >> %s / (1 + %s / 200 x (%s x 0.5 /(1 - %s + 0.1))) x %s x %s x %s x 1.1 x %s x %s', shit.power, wpn_hit_power, dist, air_res, air_res, k_hit, body_mult, custom_ap_scale, barrel_condition_corrected, sinres)
 
 	-- Calculate armor degrading
 	 
@@ -324,42 +360,50 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		end
 	end
 	 
-	local armor_loss_increment = tonumber(k_ap * 0.60) / armor_mult
+	local armor_loss_increment = tonumber(k_ap * 0.6) / armor_mult
+	if leg_meta_sniper_null == 0 then
+		armor_loss_increment = math.max(armor_loss_increment, armor_loss_increment * math.max(k_hit, wpn_hit_power))
+	end
+	trace('Damage to armor: %s', armor_loss_increment)
 	
 	-- Reduce armor
-	local new_bone_armor = tonumber(tonumber(custom_bone_armor) - tonumber(armor_loss_increment))
-	custom_bone_value[custom_bone_id] = new_bone_armor
+	armor_hp[npc_id] = armor_hp[npc_id] - armor_loss_increment
 	
 	if ini_stalkers:section_exist(npc_sec) then
 		if ini_stalkers:line_exist(npc_sec, "dmg_reduction") then
 			local reduce =  tonumber(ini_stalkers:r_string_ex(npc_sec, "dmg_reduction"))
-			reduce = math.min(reduce, 0.0)
-			reduce = math.max(reduce, 0.99)
+			reduce = math.max(reduce, 0.0)
+			reduce = math.min(reduce, 0.99)
 			trace('NPC has stats defined in [gamma_stalkers.ltx] >> damage reduction: %s', reduce)
 			shit.power = shit.power * reduce
 		end
 	end
+
+	-- Treat damage BEFORE ARMOR as (on_before_hit)
+	-- This ensures the Thistle actually does something.
+	pbadamage = hit(shit)
+	PBA_obh(npc, pbadamage, bone_id, flags)
 	
-	local ap_fx = 0
-	if k_ap < custom_bone_armor then
-		local new_bone_armor = tonumber(tonumber(custom_bone_armor) - tonumber(armor_loss_increment))
-		custom_bone_value[custom_bone_id] = new_bone_armor
-		if k_ap > new_bone_armor then -- if bullet damaged armor enough and pen with reduced power
-			shit.power = shit.power * custom_bone_hitfraction
-			FX_Play("pfx_flesh", npc, shit, custom_bone_name)
-			ap_fx = 1
+	shit.power = pbadamage.power
+
+	if k_ap < armor_hp[npc_id] then
+		armor_hp[npc_id] = armor_hp[npc_id] - armor_loss_increment
+		trace('Armor damaged again.')
+
+		if k_ap > armor_hp[npc_id] then
+			shit.power = shit.power * custom_hitfraction
+			FX_Play("pfx_armored_flesh", npc, shit, bone_name)
 		else
-			shit.power = 0.025 * shit.power * custom_bone_hitfraction * wm_size * 45 -- residual concussion damage if bullet didn't damage armor enough, the bigger the ammo the bigger the residual damages
-			FX_Play("pfx_armor", npc, shit, custom_bone_name)
+			shit.power = 0.025 * shit.power * custom_hitfraction * wm_size * 45
+			FX_Play("pfx_armor", npc, shit, bone_name)
 		end
 	else
-		custom_bone_value[custom_bone_id] = custom_bone_armor
-		if ap_fx == 0 then
-			FX_Play("pfx_flesh", npc, shit, custom_bone_name)
-		end
+		shit.power = shit.power * (math.min(custom_hitfraction * 2, 1.0))
+		FX_Play("pfx_flesh", npc, shit, bone_name)
 	end
 
-	trace('Remaining armor at %s >> %s', custom_bone_id, custom_bone_value[custom_bone_id])
+	trace('Damage after armor: %s', shit.power)
+	trace('Remaining armor: %s', armor_hp[npc_id])
 
 	-- Double the damage if the NPC is wounded
 	-- This is for having better bonuses from PBA as wounded NPCs die instantly anyways.
@@ -379,11 +423,6 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	
 	shit.power = shit.power * difficulty_multiplier[game_num]
 	
-	pbadamage = hit(shit)
-	PBA_obh(npc, pbadamage, bone_id, flags)
-	
-	shit.power = pbadamage.power
-	
 	life_remove = shit.power
 	
 	local gib_threshold = -0.67
@@ -397,6 +436,8 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	if surrender_bonus ~= 0 then
 		life_remove = life_remove / 2.0
 	end
+
+	old_health = npc.health
 	
 	if surrender_bonus == 1 then
 		trace('NPC is surrendering >> kill instantly.')
@@ -407,16 +448,17 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	end
 
 	if npc.health <= 0 or npc:alive() == 0 then
-		trace('NPC died >> firing PBA on_before_death')
 		PBA_odc(npc, db.actor)
 		npc.health = 0
+	else
+		PBA_ohc(npc, shit.power, shit.direction, db.actor, bone_id)
 	end
 
 	-- LUDICROUS GIBS
-	if npc.health <= 0 and npc.health - life_remove <= gib_threshold then
+	if npc.health <= 0 and (old_health - life_remove) <= gib_threshold then
 		if settings.gibs ~= 0 and math.random(1, 10) >= 4 then
 			trace('Rolled ludicrous gibs!')
-			FX_Play("pfx_gibs", npc, shit, custom_bone_name)
+			FX_Play("pfx_gibs", npc, shit, bone_name)
 			play_sound("gore\\hit_zombie_"..math.random(23), 1.0, npc)
 		end
 	end
@@ -429,6 +471,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	trace("Final damage: [" .. life_remove .. "]")
 	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage.', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], life_remove)
 	
+	flags.ret_value = 0
 	shit.power = 0.0001
 	life_remove = nil
 	

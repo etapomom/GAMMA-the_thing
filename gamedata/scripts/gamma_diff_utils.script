@@ -1,15 +1,5 @@
 ini_particles	= ini_file_ex("plugins\\gamma_particles.ltx")
 
--- Monkey patch PBA out of the math
-PBA_m_before_hit	= perk_based_artefacts.monster_on_before_hit
-PBA_n_before_hit	= perk_based_artefacts.npc_on_before_hit
-
-function perk_based_artefacts.npc_on_before_hit(npc, s_hit, bone_id, flags)
-end
-
-function perk_based_artefacts.monster_on_before_hit(monster, s_hit, bone_id)
-end
-
 -- Lifted from PBA, I'm sorry demonized
 function get_random_array_element(t)
 	return t[math.random(#t)]
@@ -46,7 +36,9 @@ end
 -- Particles!
 function FX_Play(fx, who, shit, where)
 	
-	if not settings.particles then
+	load_settings()
+
+	if not (settings.particles > 0) then
 		trace("particles disabled!")
 		return
 	end
@@ -132,37 +124,6 @@ function get_Barrel(wpn)
 	
 	return barrel_condition_corrected
 end
-
--- Buff the shit out of the Thistle to accomodate PBA kicking off AFTER damage reductions
-pba = perk_based_artefacts
-pba.artefact_props.af_repei =
-{
-	effect_time = 7,
-	bleed_coeff = 0.0035, -- Bigger number => bigger bleeding damage
-	hit_coeff = 0.5,
-	on_before_hit = function(self, actor, artefact_count, artefact_ids, artefact_names, npc, s_hit, bone_id, flags)
-		local hit_k = self.hit_coeff
-		local bleeding_hit = s_hit.power * -self.bleed_coeff * artefact_count
-		s_hit.power = s_hit.power * hit_k
-		
-		pba.add_simple_timed_effect(self.effect_time, function()
-			if not npc:alive() then return end
-			npc:change_health(bleeding_hit)
-			--pba.trace("Thistle, npc health %s", npc.health)
-		end)
-	end,
-	on_hit = function(self, actor, artefact_count, artefact_ids, artefact_names, npc, amount, local_direction, who, bone_index, last_npc_hit)
-		pba.add_simple_timed_effect(self.effect_time, function()
-			if not npc:alive() then return end
-			if npc.health > 0 then
-				CreateTimeEvent("af_thistle_hud", "af_thistle_hud", 0, function()
-					ui_enemy_health.on_hit(npc, nil, local_direction, who, bone_index)
-					return true
-				end)
-			end
-		end, nil, "af_thistle_hud")
-	end
-}
 
 -- From the later GBOOBS updates
 function play_sound(snd, volume, npc)

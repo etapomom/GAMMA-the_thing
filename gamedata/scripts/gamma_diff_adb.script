@@ -18,8 +18,7 @@ local play_sound	= gamma_diff_utils.play_sound
 local ini_adb               = ini_file_ex("plugins\\gamma_actor.ltx")
 
 -- Kill wepl's original function to ENSURE it actually works.
-function wepl_hit_effect.actor_on_before_hit(shit, bone_id, flags)
-end
+function wepl_hit_effect.actor_on_before_hit(shit, bone_id, flags) end
 
 -- Kill Haruka's Skills to ensure it works too
 function haru_skills.actor_on_before_hit(shit)
@@ -89,6 +88,30 @@ function get_cond(slot)
 		return max(cond + 0.05, 1.0)
 	end
 	return 1.0
+end
+
+local pba = perk_based_artefacts
+function perk_based_artefacts.actor_on_before_hit(s_hit, bone_id, flags) end
+function perk_based_artefacts.actor_on_hit_callback(obj, amount, local_direction, who, bone_index) end
+function perk_based_artefacts.actor_on_before_death(whoID, flags) end
+
+function PBA_a_obh(shit, bone_id, flags)
+	trace('Firing PBA >> actor_on_before_hit')
+	pba.last_hit = hit(shit)
+	pba.process_artefacts(pba.artefact_on_before_hit_functions, shit, bone_id, flags)
+end
+
+function PBA_a_ohc(obj, amount, local_direction, who, bone_index)
+	trace('Firing PBA >> actor_on_hit_callback')
+	pba.process_artefacts(pba.artefact_on_hit_functions, obj, amount, who, last_hit)
+end
+
+local flags = { ret_value = true }
+
+function PBA_a_obd(whoID, flags)
+	trace('Firing PBA >> actor_on_before_death')
+	flags.ret_value = false
+	pba.process_artefacts(pba.artefact_on_before_death_functions, whoID, flags)
 end
 
 local adb_classic = false
@@ -543,10 +566,14 @@ function shit_booster(shit, bone_id, k_ap)
 	end
 
 	trace('Armor degradation: %s // Helmet degradation: %s', tn(degrade_o), tn(degrade_h))
+
+	PBA_a_ohc(db.actor, damage, shit.direction, shit.draftsman, bone_id)
 	
 	shit.power = 0.0
 	
-	health_gating_flag = health_gating_active or (db.actor.health - damage <= max(tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_trigger") or 1), 0))
+	health_gating_flag = health_gating_active 
+	or ( db.actor.health >= tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_trigger")) 
+		and db.actor.health - damage <= max(tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_trigger") or 1), 0) )
 	
 	if health_gating_flag then
 		if not health_gating_active then
@@ -560,6 +587,9 @@ function shit_booster(shit, bone_id, k_ap)
 	
 	if shit.type ~= hit.radiation then
 		if not health_gating_active then
+			if (db.actor.health - damage) <= 0 then
+				PBA_a_obd(db.actor, flags)
+			end
 			db.actor:set_health_ex(db.actor.health - damage)
 		else
 			min_health = max(tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_limit") or 1), 0)
@@ -571,6 +601,9 @@ function shit_booster(shit, bone_id, k_ap)
 					db.actor:set_health_ex(max( (db.actor.health - damage), min_health))
 				end
 			else
+				if (db.actor.health - damage) <= 0 then
+					PBA_a_obd(db.actor, flags)
+				end
 				db.actor:set_health_ex(db.actor.health - damage)
 				trace('HEALTH GATE BYPASSED (Self inflicted)')
 			end
@@ -587,7 +620,7 @@ function shit_booster(shit, bone_id, k_ap)
 		end
 	end
 
-	if damage >= 0.005 and shit.type ~= hit.radiation then
+	if shit.type ~= hit.radiation or (shit.type == hit.radiation and damage >= 0.005) then
 		if shit.type == hit.fire_wound then
 			combat_log('%s || Struck by %s (%s) with %s (%s) in the %s for %s damage.', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec, hitboxes[bone_id] or "whole body", damage)
 		else
@@ -605,9 +638,6 @@ function shit_booster(shit, bone_id, k_ap)
 	end
 end
 
-PBA_math = perk_based_artefacts.actor_on_before_hit
-function perk_based_artefacts.actor_on_before_hit(s_hit, bone_id, flags)
-end
 
 function actor_on_before_hit(shit, bone_id, flags)
 
@@ -650,7 +680,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 		return
 	end
 	
-	PBA_math(shit, bone_id, flags)		-- Call PBA before any armor math takes place. This makes the Black Angel useful.
+	PBA_a_obh(shit, bone_id, flags)		-- Call PBA before any armor math takes place. This makes the Black Angel useful.
 	wepl(shit, bone_id, flags)			-- Also call wepl before shit.power = 0 to ensure it actually works.
 
 	trace(' ')
@@ -685,12 +715,13 @@ function actor_on_before_hit(shit, bone_id, flags)
 		
 		trace('Bullet hit >> weapon: %s // ammo: %s', sec, ammo_section)
 		
-		buckshot = ini_sys:r_float_ex(ammo_section, "buck_shot") or 1
-		ricochet = ini_sys:r_bool_ex(ammo_section, "allow_ricochet") or 0
+		buckshot = ini_sys:r_float_ex(ammo_section, "buck_shot") and ini_sys:r_float_ex(ammo_section, "buck_shot") or 0
+		ricochet = ini_sys:r_bool_ex(ammo_section, "allow_ricochet") and ini_sys:r_bool_ex(ammo_section, "allow_ricochet") or true
 		if buckshot > 1 then
 			--old_power = shit.power
 			--shit.power = shit.power * buckshot
 			trace('Ammo has multiple pellets >> buckshot: %s', buckshot)
+			--buckshot = 1
 		end
 
 		-- Trim the ammo_section name
@@ -708,12 +739,12 @@ function actor_on_before_hit(shit, bone_id, flags)
 		end
 		
 		body_part = hitboxes[bone_id]
-		body_mult = hitbox_mult[body_part] or 0.5
+		body_mult = hitbox_mult[body_part] or hitbox_mult["legs"]
 		shit.power = shit.power * body_mult
 
 		trace('Body part multiplier >> body_mult: x %s', body_mult)
 
-		if buckshot or ricochet == 0 then
+		if buckshot > 1 or ricochet == 0 then
 			shit_booster(shit, bone_id, k_ap)
 			return
 		end
@@ -724,6 +755,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				hit_last[shit.draftsman:id()] = time_global()
 			else
 				trace('Last hit was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_bullet))
+				combat_log('%s || HIT INVALID || %s (%s) tried to hit you with %s (%s).', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec)
 				shit.power = 0
 			end
 		else
@@ -780,6 +812,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_mine))
+					combat_log('%s || HIT INVALID || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
 					shit.power = 0
 				end
 			else
@@ -799,6 +832,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_field_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_field))
+					combat_log('%s || HIT INVALID || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
 					shit.power = 0
 				end
 			else
@@ -818,6 +852,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_ball_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_ball))
+					combat_log('%s || HIT INVALID || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
 					shit.power = 0
 				end
 			else
@@ -835,6 +870,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					fall_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last fall damage (maybe) instance was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_strike_self))
+					combat_log('%s || HIT INVALID || Too many fall damage instances!', time_global())
 					shit.power = 0
 				end
 			else
