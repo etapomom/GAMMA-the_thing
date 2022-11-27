@@ -27,27 +27,31 @@ ap_res          = 1
 dmg_res         = 1
 
 [faction_isg]:faction_base
-ap_res          = 0.5
-dmg_res         = 0.75
+ap_res          = 0.4
+dmg_res         = 0.85
 
 [faction_greh]:faction_base
 dmg_res         = 0.15
 
 [gbo_monolith_eidolon]
-spec_armor      = 1.0
+spec_armor_head = 1.0
+spec_armor_body = 1.0
 armor      		= 10.0
-dmg_reduction	= 0.2
+dmg_reduction	= 0.25
 
 [gbo_sim_default_phantom_1]
-spec_armor      = 1.0
+spec_armor_head = 1.0
+spec_armor_body = 1.0
 armor           = 10.0
 
 [gbo_sim_default_phantom_2]:gbo_sim_default_phantom_1
 [gbo_sim_default_phantom_3]:gbo_sim_default_phantom_1
 
 [gbo_greh_squad_leader]
+spec_armor_head = 0.55
+spec_armor_body = 0.62
 armor			= 2.0
-dmg_reduction	= 0.15
+dmg_reduction	= 0.85
 
 [gbo_greh_castigator_1]:gbo_greh_squad_leader
 [gbo_greh_castigator_2]:gbo_greh_squad_leader
@@ -55,14 +59,21 @@ dmg_reduction	= 0.15
 [gbo_greh_castigator_4]:gbo_greh_squad_leader
 
 [gbo_greh_castigator_5]
-spec_armor      = 0.86
-armor			= 4.0
-dmg_reduction	= 0.5
+spec_armor_head = 0.62
+spec_armor_body = 0.80
+armor			= 2.5
+dmg_reduction	= 0.75
 
 [gbo_greh_castigator_6]:gbo_greh_castigator_5
-[gbo_kat_greh_sabaoth]:gbo_greh_castigator_5
-[gbo_lab_greh_sabaoth]:gbo_greh_castigator_5
-[gbo_sar_greh_sabaoth]:gbo_greh_castigator_5
+
+[gbo_kat_greh_sabaoth]
+spec_armor_head = 0.80
+spec_armor_body = 1.0
+armor           = 3.0
+dmg_reduction   = 0.5
+
+[gbo_lab_greh_sabaoth]:gbo_kat_greh_sabaoth
+[gbo_sar_greh_sabaoth]:gbo_kat_greh_sabaoth
 
 [gbo_monolith_eidolon_ghost]:gbo_monolith_eidolon		;; LTTZ DC
 armor			= 2.0
