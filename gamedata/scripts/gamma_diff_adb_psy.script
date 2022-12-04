@@ -3,6 +3,7 @@ local get_helmet 	= arszi_psy.get_telepatic_protection_helmet
 local get_artefacts = arszi_psy.get_telepatic_protection_artefacts
 local get_booster 	= arszi_psy.get_telepatic_protection_booster
 local adb			= gamma_diff_adb
+local combat_log	= gamma_diff_utils.combat_log
 --local get_psyhelm 	= arszi_psy.get_telepatic_protection_outfit
 
 local function load_defaults()
@@ -28,7 +29,7 @@ local function load_settings()
 end
 
 local function trace(str, ...)
-	if settings.debug then
+	if settings.debug == 2 then
 		printf("[G.A.M.M.A. THE THING] PSY: " .. str, ...)
 	end
 end
@@ -133,6 +134,10 @@ function actor_on_before_hit(shit)
 	change_psy_health(-damage)
 	trace('Final psy damage: %s', damage)
 
+	if damage > 0.001 then
+		combat_log("%s || PSY || Sanity decreased by %s", time_global(), damage)
+	end
+		
 	shit.power = 0
 	return
 end
