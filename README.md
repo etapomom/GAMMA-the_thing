@@ -1,5 +1,5 @@
 # G.A.M.M.A. THE THING
-Designed to fix vanilla Anomaly's damage to the player and also allow easier end-user modding.
+A big project that aims to fix and streamline GBOOBS and the Actor Damage Balancer from G.A.M.M.A.
 
 ### FEATURES
 - **FULLY HIJACKED** Anomaly's damage to the player system.
@@ -12,14 +12,12 @@ Designed to fix vanilla Anomaly's damage to the player and also allow easier end
     - Player resistances and damage scaling.
     - Per NPC properties (such as GBO armor, damage scaling, etc).
     - Per Monster properties (such as ammo multipliers, damage scaling, crit spots, crit multipliers)
-- A bunch of options in MCM.
-  + This will most likely be removed shortly. Except for the debug option and cosmetic toggles.
+- Fixes for a variety of crashes and annoyances.
+- Monsters can be subject to **overpenetration**, which heavily reduce their damage taken (Snipers ignore this rule)
+- NPCs' armor was split into only Head/Body instead of being per bone (i.e. armor in the left eye is independant from the rest of the head)
+- #### *FIXED MULTIHITS, BOTH FOR THE PLAYER AND THE NPCS/MONSTERS*
 
 ### TO-DO
-- Clean up damage to mobs code.
-  + Fix Claw artefact not dropping meat when killing mutants.
-  + Fix Miser's Skull not dropping money on headshot kills.
-  + Fix Boar/Flesh crit spots (This implies a revamp of how monsters are processed maybe).
-- Get better balance.
-- Clean up access to the MCM.
+- Clean up code in general.
+- Fine tune balance in general.
 - Remove .338 Lapua Magnum.
