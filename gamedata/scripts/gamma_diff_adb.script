@@ -1,6 +1,5 @@
 local get_outfit_ap_res     = grok_actor_damage_balancer.get_outfit_ap_res
 local get_outfit_immunity   = grok_actor_damage_balancer.get_outfit_immunity
-local psy                   = gamma_diff_adb_psy
 local clamp                 = _g.clamp
 local smallest				= 0.0000001
 local ceil					= math.ceil
@@ -14,6 +13,9 @@ local health_gating_active  = false
 
 local FX_Play 		= gamma_diff_utils.FX_Play
 local play_sound	= gamma_diff_utils.play_sound
+local trim_ammo		= gamma_diff_utils.trim_ammo
+local combat_log	= gamma_diff_utils.combat_log
+local tn			= gamma_diff_utils.trim_number
 
 local ini_adb               = ini_file_ex("plugins\\gamma_actor.ltx")
 
@@ -23,20 +25,6 @@ function wepl_hit_effect.actor_on_before_hit(shit, bone_id, flags) end
 -- Kill Haruka's Skills to ensure it works too
 function haru_skills.actor_on_before_hit(shit)
 end
-
-function tn(number)
-	return tonumber(string.format("%.3f", number))
-end
-
-local function rnd(number)
-	--return _g.round_idp(number, 2)
-	return number
-end
-
---[[
-function utjan_traits.actor_on_before_hit(s_hit)
-end
---]]
 
 local function load_defaults()
 	local t = {}
@@ -66,12 +54,6 @@ local function trace(str, ...)
 	end
 end
 
-local function combat_log(str, ...)
-	if settings.debug == 1 then
-		printf("" .. str, ...)
-	end
-end
-
 function keep_alive()
 	if time_global() - health_gating_tg > max(tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_time") or 0), 0) then
 		health_gating_flag = false
@@ -79,15 +61,6 @@ function keep_alive()
 		trace('HEALTH GATE EXPIRED')
 		UnregisterScriptCallback("actor_on_update", keep_alive)
 	end
-end
-
-function get_cond(slot)
-	obj = db.actor:item_in_slot(slot)
-	if obj then
-		cond = obj:condition() and obj:condition() or 1.0
-		return max(cond + 0.05, 1.0)
-	end
-	return 1.0
 end
 
 local pba = perk_based_artefacts
@@ -273,9 +246,6 @@ function get_protection(shit, bone_id, k_ap)
 				armor_protection = c_outfit:GetDefHitTypeProtection(shit.type) * cond * adjuster or 0
 				bonus_durability = c_outfit:GetDefHitTypeProtection(shit.type) * adjuster or 0
 			end
-
-			armor_protection = rnd(armor_protection)
-			bonus_durability = rnd(bonus_durability)
 			
 			armor_hit_frac = ini_sys:r_float_ex(outfit:section(), "hit_fraction_actor") or 1
 			armor_bone_value = (1 - armor_hit_frac) * cond * 0.75 or 0
@@ -306,9 +276,6 @@ function get_protection(shit, bone_id, k_ap)
 				helmet_protection = c_helmet:GetDefHitTypeProtection(shit.type) * cond * adjuster or 0
 				bonus_durability_h = c_helmet:GetDefHitTypeProtection(shit.type) * adjuster or 0
 			end
-
-			helmet_protection = rnd(helmet_protection)
-			bonus_durability_h = rnd(bonus_durability_h)
 			
 			helmet_hit_frac = ini_sys:r_float_ex(helmet:section(), "hit_fraction_actor") or 1
 			helmet_bone_value = (1 - helmet_hit_frac) * cond or 0
@@ -347,6 +314,10 @@ function get_protection(shit, bone_id, k_ap)
 			local immunities_sec = ini_sys:r_string_ex(sec, "hit_absorbation_sect")
 			af_prot_value = ini_sys:r_float_ex(immunities_sec, immunity) * cond
 
+			if af_prot_value < 0 then
+				af_prot_value = af_prot_value * 4
+			end
+
 			if sec == "af_kevlar" then
 				af_bone_value = 0.00
 			end
@@ -371,8 +342,8 @@ function get_protection(shit, bone_id, k_ap)
 			artefacts_ap_res = artefacts_ap_res + af_bone_value
 		end	
 	)
-	--artefacts_protection = artefacts_protection * 0.6 -- scale to the displayed inventory values more or less
-	artefacts_protection = rnd(artefacts_protection * arti)
+	artefacts_protection = artefacts_protection * 0.5 -- scale to the displayed inventory values more or less
+	artefacts_protection = artefacts_protection * arti
 
 	if artefacts_ap_res ~= 0 then
 		trace('Artefacts BR: %s >> Total BR: %s', tn(artefacts_ap_res), tn(armor_bone_value + artefacts_ap_res))
@@ -410,9 +381,9 @@ function get_protection(shit, bone_id, k_ap)
 
 		if settings.particles == 2 then
 			if no_pen == 1 then
-				FX_Play("pfx_armor", db.actor, shit, bone_id)
+				FX_Play("pfx_armor", db.actor, shit, db.actor:bone_name(bone_id))
 			else
-				FX_Play("pfx_flesh", db.actor, shit, bone_id)
+				FX_Play("pfx_flesh", db.actor, shit, db.actor:bone_name(bone_id))
 			end
 		end
 	end
@@ -501,6 +472,9 @@ function shit_booster(shit, bone_id, k_ap)
 	
 	degrade_math = (damage * (0.07 * (1.0 + absorb)))
 	degrade_math = degrade_math * degrade_multiplier[game_num]
+
+	PBA_a_obh(shit, bone_id, flags)		-- Call PBA before any armor math takes place. This makes the Black Angel useful.
+	wepl(shit, bone_id, flags)			-- Also call wepl before shit.power = 0 to ensure it actually works.
 
 	damage = damage_math(shit, scale, total_prot, af_prot, bo_prot)
 	damage = damage * zone_mult
@@ -620,7 +594,7 @@ function shit_booster(shit, bone_id, k_ap)
 		end
 	end
 
-	if shit.type ~= hit.radiation or (shit.type == hit.radiation and damage >= 0.005) then
+	if shit.type == hit.fire_wound or (shit.type ~= hit.radiation and damage >= 0.0025)  or (shit.type == hit.radiation and damage >= 0.005) then
 		if shit.type == hit.fire_wound then
 			combat_log('%s || Struck by %s (%s) with %s (%s) in the %s for %s damage.', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec, hitboxes[bone_id] or "whole body", damage)
 		else
@@ -633,7 +607,7 @@ function shit_booster(shit, bone_id, k_ap)
 	end
 
 	if db.actor.health <= 0 and db.actor.health - damage <= -0.5 and settings.gibs == 2 then
-		FX_Play("pfx_gibs", db.actor, shit, bone_id)
+		FX_Play("pfx_gibs", db.actor, shit, db.actor:bone_name(bone_id))
 		play_sound("gore\\hit_zombie_"..math.random(23), 1.0, db.actor)
 	end
 end
@@ -647,6 +621,10 @@ function actor_on_before_hit(shit, bone_id, flags)
 
 	if not db.actor:alive() then
 		shit.power = 0
+		return
+	end
+
+	if shit.power == 0 then
 		return
 	end
 
@@ -679,9 +657,6 @@ function actor_on_before_hit(shit, bone_id, flags)
 		shit.power = 0
 		return
 	end
-	
-	PBA_a_obh(shit, bone_id, flags)		-- Call PBA before any armor math takes place. This makes the Black Angel useful.
-	wepl(shit, bone_id, flags)			-- Also call wepl before shit.power = 0 to ensure it actually works.
 
 	trace(' ')
 	trace('You got hit! >> tg: %s // power: %s // where: %s // mult: %s // who: %s (%s)', time_global(), tn(shit.power), hitboxes[bone_id] or "whole body", difficulty_multiplier[game_num], shit.draftsman:section(), shit.draftsman:id())
@@ -725,9 +700,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 		end
 
 		-- Trim the ammo_section name
-		ammo_section = string.gsub(ammo_section, "ammo_", "")
-		ammo_section = string.gsub(ammo_section, "_bad", "")
-		ammo_section = string.gsub(ammo_section, "_verybad", "")
+		ammo_section = trim_ammo(ammo_section)
 
 		wpn_sec = sec or "something"
 		amm_sec = ammo_section or "a bullet maybe"
@@ -755,7 +728,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				hit_last[shit.draftsman:id()] = time_global()
 			else
 				trace('Last hit was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_bullet))
-				combat_log('%s || HIT INVALID || %s (%s) tried to hit you with %s (%s).', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec)
+				combat_log('%s || MULTIHIT LOCKOUT || %s (%s) tried to hit you with %s (%s).', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec)
 				shit.power = 0
 			end
 		else
@@ -812,7 +785,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_mine))
-					combat_log('%s || HIT INVALID || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
+					combat_log('%s || MULTIHIT LOCKOUT || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
 					shit.power = 0
 				end
 			else
@@ -832,7 +805,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_field_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_field))
-					combat_log('%s || HIT INVALID || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
+					combat_log('%s || MULTIHIT LOCKOUT || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
 					shit.power = 0
 				end
 			else
@@ -852,7 +825,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					zone_ball_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_ball))
-					combat_log('%s || HIT INVALID || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
+					combat_log('%s || MULTIHIT LOCKOUT || %s (%s) tried to hit you. (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), shit.type)
 					shit.power = 0
 				end
 			else
@@ -870,7 +843,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 					fall_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last fall damage (maybe) instance was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_strike_self))
-					combat_log('%s || HIT INVALID || Too many fall damage instances!', time_global())
+					combat_log('%s || MULTIHIT LOCKOUT || Too many fall damage instances!', time_global())
 					shit.power = 0
 				end
 			else

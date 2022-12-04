@@ -1,6 +1,7 @@
 local FX_Play 		= gamma_diff_utils.FX_Play
 local get_Barrel 	= gamma_diff_utils.get_Barrel
 local play_sound	= gamma_diff_utils.play_sound
+local has_t3_pda	= gamma_diff_utils.has_t3_pda
 
 local floor			= math.floor
 local ceil			= math.ceil
@@ -128,7 +129,7 @@ hitboxes =
 	[43] = "arms",
 	[44] = "arms",
 	[45] = "arms",
-	[46] = "torso",
+	[46] = "legs",
 }
 
 Bone_IDs = 
@@ -219,8 +220,6 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		surrender_bonus = 1
 	end
 
-	--printf('- %s // %s // %s', (shit.power >= 50), (npc:critically_wounded() == true), (npc:wounded() == true))
-
 	local shooter = shit.draftsman
 	wpn = level.object_by_id(shit.weapon_id)
 	sec = wpn:section()
@@ -267,7 +266,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 				npc_last[npc:id()] = time_global()
 			else
 				trace('Last hit on %s was less than %s ms ago, SKIPPING!', npc:name(), (1000/invul_frac) * invul_time_bullet)
-				combat_log('%s || HIT INVALID || You tried to hit %s (%s) with %s (%s).', time_global(), npc:section(), npc:id(), sec, ammo_section)
+				combat_log('%s || MULTIHIT LOCKOUT || You tried to hit %s (%s) with %s (%s).', time_global(), npc:section(), npc:id(), sec, ammo_section)
 				shit.power = 0.0
 				return
 			end
@@ -282,12 +281,6 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	ammo_section = string.gsub(ammo_section, "_verybad", "")
 
 	trace('%s || %s (%s) >> hit: %s // k_hit: %s // k_ap: %s', time_global(), sec, ammo_section, wpn_hit_power, k_hit, k_ap)
-
-	--[[
-	for a=0, 50 do
-		printf('%s - %s', a, npc:bone_name(a) or "undefined")
-	end
-	--]]
 
 	-- Disable sniper rounds leg-shot bonus
 	local kind = ini_sys:r_string_ex(sec, "kind")
@@ -547,12 +540,21 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		if settings.gibs ~= 0 and math.random(1, 10) >= 4 then
 			trace('Rolled ludicrous gibs!')
 			FX_Play("pfx_gibs", npc, shit, npc:bone_name(bone_id))
-			play_sound("gore\\hit_zombie_"..math.random(23), 1.0, npc)
+			play_sound("gore\\hit_zombie_"..math.random(23), 0.5, npc)
 		end
 	end
 	
 	trace("Final damage: [" .. life_remove .. "]")
 	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage.', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], life_remove)
+
+	if has_t3_pda() == true then
+		local snd = xr_sound.get_safe_sound_object("gamma\\hitmarker_body")
+		if hitboxes[bone_id] == "head" then
+			snd = xr_sound.get_safe_sound_object("gamma\\hitmarker_head")
+		end
+		snd:play_at_pos(db.actor, db.actor:position())
+		snd.volume = 2
+	end
 	
 	flags.ret_value = 0
 	shit.power = 0.0001

@@ -2,5 +2,109 @@
 ![zone_field_thermal]
 hit_type = burn
 
+;;;;; CHEM
+![zone_mine_acidic]
+$def_sphere             = 1.5
+awaking_time            = 250
+blowout_time            = 1500
+accamulate_time         = 500
+blowout_wind_time_start = 0
+blowout_wind_time_peak  = 250
+blowout_wind_time_end   = 500
+blowout_wind_power      = 0.5
+
+![zone_mine_acidic_weak]
+max_start_power         = 0.85
+secondary_hit_power     = 0.0
+![zone_mine_acidic_average]
+max_start_power         = 0.875
+secondary_hit_power     = 0.0005
+![zone_mine_acidic_strong]
+max_start_power         = 0.9
+secondary_hit_power     = 0.00075
+
+![zone_mine_acidic_big]
+$def_sphere             = 3
+max_start_power         = 0.9
+secondary_hit_power     = 0.001
+
+![zone_mine_chemical_weak]:zone_mine_acidic_weak
+![zone_mine_chemical_average]:zone_mine_acidic_average
+![zone_mine_chemical_strong]:zone_mine_acidic_strong
+
+![zone_buzz_weak]:zone_mine_chemical_weak
+![zone_buzz_average]:zone_mine_chemical_average
+![zone_buzz_strong]:zone_mine_chemical_strong
+
+; Burnt Fuzz (is chem too!)
+
+![zone_burning_fuzz_weak]
+max_start_power         = 0.5
+![zone_burning_fuzz_average]
+max_start_power         = 0.525
+![zone_burning_fuzz_strong]
+max_start_power         = 0.55
+
+;;;;; SHOCK
+![zone_mine_electric_weak]
+max_start_power     = 0.8
+![zone_mine_electric_average]
+max_start_power     = 0.825
+![zone_mine_electric_strong]
+max_start_power     = 0.85
+
+![zone_witches_galantine_weak]:zone_mine_electric_weak
+![zone_witches_galantine_average]:zone_mine_electric_average
+![zone_witches_galantine_strong]:zone_mine_electric_strong
+
+![zone_mine_static_weak]:zone_mine_electric_weak
+![zone_mine_static_average]:zone_mine_electric_average
+![zone_mine_static_strong]:zone_mine_electric_strong
+
+;;;;; STRIKE
+
+;![zone]
+
+;;;;; THERMAL
+![fireball_zone] ; FUCK THIS THING
+effective_radius        = 1.5
+max_start_power         = 1.0
+awaking_time            = 250
+blowout_time            = 250
+accamulate_time         = 250
+
+![zone_campfire]
+blowout_time            = 500
+
 ![zone_mine_thermal]
-hit_type = burn
+$def_sphere             = 1
+hit_type                = burn
+awaking_time            = 100
+accamulate_time         = 500
+
+![zone_mine_thermal_weak]
+hit_type                = burn
+max_start_power         = 0.85
+secondary_hit_power     = 0.00005
+![zone_mine_thermal_average]
+hit_type                = burn
+max_start_power         = 0.875
+secondary_hit_power     = 0.000075
+![zone_mine_thermal_strong]
+hit_type                = burn
+max_start_power         = 0.9
+secondary_hit_power     = 0.0001
+
+![zone_mine_steam_weak]
+max_start_power         = 0.425
+secondary_hit_power     = 0.0005
+![zone_mine_steam_average]
+max_start_power         = 0.4375
+secondary_hit_power     = 0.00075
+![zone_mine_steam_strong]
+max_start_power         = 0.45
+secondary_hit_power     = 0.001
+
+![zone_mine_zharka_static_weak]:zone_mine_thermal_weak
+![zone_mine_zharka_static_average]:zone_mine_thermal_average
+![zone_mine_zharka_static_strong]:zone_mine_thermal_strong

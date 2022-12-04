@@ -1,6 +1,7 @@
 local FX_Play 		= gamma_diff_utils.FX_Play
 local get_Barrel 	= gamma_diff_utils.get_Barrel
 local play_sound	= gamma_diff_utils.play_sound
+local has_t3_pda	= gamma_diff_utils.has_t3_pda
 ini_monster 		= ini_file_ex("plugins\\gamma_monsters.ltx")
 ini_particles		= ini_file_ex("plugins\\gamma_particles.ltx")
 ini_adb				= ini_file_ex("plugins\\gamma_actor.ltx")
@@ -88,7 +89,7 @@ function monster_on_before_hit(monster,shit,bone_id)
 	sec = wpn:section()
 	
 	cqc_mult 			= 1.0
-	mutant_mult			= 0.25
+	mutant_mult			= 0.8
 	ammo_mult			= 1.0
 	ammo_scale			= 0.85
 	spec_monster_mult	= 1.00
@@ -97,11 +98,11 @@ function monster_on_before_hit(monster,shit,bone_id)
 	trace('%s about to be hit by %s in bone %s for %s damage', monster and monster:name(), shit and shit.draftsman and shit.draftsman:name(), bone_id, shit.power)
 	
 	if (string.match(sec, "knife")) then
-		cqc_mult = 9.0
+		cqc_mult = 4.0
 	end
 	
 	if (string.match(sec, "axe")) then
-		cqc_mult = 4.5
+		cqc_mult = 2.0
 	end
 
 	local wpn_id 			= wpn:id()
@@ -219,6 +220,12 @@ function monster_on_before_hit(monster,shit,bone_id)
 		trace('Monster has damage multiplier defined in [%s], >> armor: %s', who, spec_monster_mult)
 	end
 
+	shit.power = wpn_hit_power / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * k_hit * mutant_mult * ammo_mult * spec_monster_mult * bone_mult * cqc_mult * barrel_condition_corrected
+
+	pbadamage = hit(shit)
+	PBA_m_obh(monster, pbadamage, bone_id, flags)
+	shit.power = pbadamage.power
+
 	-- Process monster ltx
 	immunities_sec = ini_sys:r_string_ex(monster:section(), "immunities_sect") or nil
 	protection_sec = ini_sys:r_string_ex(monster:section(), "protections_sect") or nil
@@ -262,12 +269,6 @@ function monster_on_before_hit(monster,shit,bone_id)
 	imm = max(imm, 0.1)
 	skin_armor = clamp(skin_armor, -1.0, 0.99)
 
-	shit.power = wpn_hit_power / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * k_hit * mutant_mult * ammo_mult * spec_monster_mult * bone_mult * cqc_mult * barrel_condition_corrected
-
-	pbadamage = hit(shit)
-	PBA_m_obh(monster, pbadamage, bone_id, flags)
-	shit.power = pbadamage.power
-
 	shit.power = shit.power * imm
 	shit.power = shit.power * (1 - skin_armor)
 
@@ -310,6 +311,15 @@ function monster_on_before_hit(monster,shit,bone_id)
 		combat_log('%s || Struck %s (%s) with %s (%s) as a critical hit (x%s) for %s damage.', time_global(), monster:section(), monster:id(), sec, ammo_section, bone_mult, life_remove)
 	else
 		combat_log('%s || Struck %s (%s) with %s (%s) for %s damage.', time_global(), monster:section(), monster:id(), sec, ammo_section, life_remove)
+	end
+
+	if has_t3_pda() == true then
+		local snd = xr_sound.get_safe_sound_object("gamma\\hitmarker_body")
+		if crit == 1 then
+			snd = xr_sound.get_safe_sound_object("gamma\\hitmarker_head")
+		end
+		snd:play_at_pos(db.actor, db.actor:position())
+		snd.volume = 2
 	end
 	
 	shit.power = 0.0001
