@@ -186,7 +186,7 @@ local hit_type_id =
 	[10] = "Burn (light_burn)",
 }
 
-function get_protection(shit, bone_id, k_ap, flags)
+function get_protection(shit, bone_id, k_ap)
 	
 	-- Fallback defaults
 	immunity = "strike_immunity"
@@ -425,7 +425,7 @@ function get_protection(shit, bone_id, k_ap, flags)
 	bo_prot = booster_protection
 end
 
-function shit_booster(shit, bone_id, k_ap, flags)
+function shit_booster(shit, bone_id, k_ap)
 	get_protection(shit, bone_id and bone_id or "bip01_spine", k_ap and k_ap or 0)
 
 	damage = (shit.power * scale)
@@ -617,7 +617,6 @@ function shit_booster(shit, bone_id, k_ap, flags)
 	end
 
 	shit.power = 0.0
-	--flags.ret_value = false
 end
 
 
@@ -726,14 +725,14 @@ function actor_on_before_hit(shit, bone_id, flags)
 		trace('Body part multiplier >> body_mult: x %s', body_mult)
 
 		if buckshot > 1 or ricochet == 0 then
-			shit_booster(shit, bone_id, k_ap, flags)
+			shit_booster(shit, bone_id, k_ap)
 			flags.ret_value = false
 			return
 		end
 		
 		if hit_last[shit.draftsman:id()] then
 			if time_global() - hit_last[shit.draftsman:id()] >= (1000/invul_frac) * invul_time_bullet then
-				shit_booster(shit, bone_id, k_ap, flags)
+				shit_booster(shit, bone_id, k_ap)
 				flags.ret_value = false
 				hit_last[shit.draftsman:id()] = time_global()
 			else
@@ -742,7 +741,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				shit.power = 0
 			end
 		else
-			shit_booster(shit, bone_id, k_ap, flags)
+			shit_booster(shit, bone_id, k_ap)
 			flags.ret_value = false
 			hit_last[shit.draftsman:id()] = time_global()
 		end
