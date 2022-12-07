@@ -67,7 +67,7 @@ end
 
 monster_last = {}
 
-function monster_on_before_hit(monster,shit,bone_id)
+function monster_on_before_hit(monster, shit, bone_id, flags)
 
 	if shit.draftsman:id() ~= db.actor:id() then return end
 	if not monster then return end
