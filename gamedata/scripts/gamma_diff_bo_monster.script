@@ -10,11 +10,11 @@ local ceil			= math.ceil
 local max			= math.max
 local min 			= math.min
 local clamp			= _g.clamp
-local smallest				= 0.0000001
-
-function tn(number)
-	return tonumber(string.format("%.3f", number))
-end
+local smallest		= 0.0000001
+local tn			= gamma_diff_utils.trim_number
+local tn100			= gamma_diff_utils.trim_100
+local combat_log	= gamma_diff_utils.combat_log
+local trim_ammo		= gamma_diff_utils.trim_ammo
 
 local function load_defaults()
 	local t = {}
@@ -41,12 +41,6 @@ end
 local function trace(str, ...)
 	if settings.debug == 2 then
 		printf("[G.A.M.M.A. THE THING] MONSTERS: " .. str, ...)
-	end
-end
-
-local function combat_log(str, ...)
-	if settings.debug == 1 then
-		printf("" .. str, ...)
 	end
 end
 
@@ -139,6 +133,7 @@ function monster_on_before_hit(monster,shit,bone_id)
 				trace('Last hit on %s was less than %s ms ago, SKIPPING!', monster:name(), (1000/invul_frac) * invul_time_bullet)
 				combat_log('%s || HIT INVALID || You tried to hit %s (%s) with %s (%s).', time_global(), monster:section(), monster:id(), sec, ammo_section)
 				shit.power = 0.0
+				flags.ret_value = false
 				return
 			end
 		else
@@ -146,9 +141,7 @@ function monster_on_before_hit(monster,shit,bone_id)
 		end
 	end
 	
-	ammo_section = string.gsub(ammo_section, "ammo_", "")
-	ammo_section = string.gsub(ammo_section, "_bad", "")
-	ammo_section = string.gsub(ammo_section, "_verybad", "")
+	trim_ammo(ammo_section)
 
 	local kind = ini_sys:r_string_ex(sec, "kind")
 	if 	kind == "w_sniper" and
@@ -308,9 +301,9 @@ function monster_on_before_hit(monster,shit,bone_id)
 	trace("Final damage: [" .. life_remove .. "]")
 	
 	if crit == 1 then
-		combat_log('%s || Struck %s (%s) with %s (%s) as a critical hit (x%s) for %s damage.', time_global(), monster:section(), monster:id(), sec, ammo_section, bone_mult, life_remove)
+		combat_log('%s || Struck %s (%s) with %s (%s) as a critical hit (x%s) for %s damage. (%s -> %s)', time_global(), monster:section(), monster:id(), sec, ammo_section, bone_mult, tn(life_remove), tn(old_health), tn(monster.health))
 	else
-		combat_log('%s || Struck %s (%s) with %s (%s) for %s damage.', time_global(), monster:section(), monster:id(), sec, ammo_section, life_remove)
+		combat_log('%s || Struck %s (%s) with %s (%s) for %s damage. (%s -> %s)', time_global(), monster:section(), monster:id(), sec, ammo_section, tn(life_remove), tn(old_health), tn(monster.health))
 	end
 
 	if has_t3_pda() == true then

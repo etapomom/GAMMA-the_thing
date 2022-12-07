@@ -186,7 +186,7 @@ local hit_type_id =
 	[10] = "Burn (light_burn)",
 }
 
-function get_protection(shit, bone_id, k_ap)
+function get_protection(shit, bone_id, k_ap, flags)
 	
 	-- Fallback defaults
 	immunity = "strike_immunity"
@@ -395,7 +395,8 @@ function get_protection(shit, bone_id, k_ap)
 		trace('Damage instance was most likely fall damage')
 		helmet_protection = 0
 		armor_protection = 0
-		fall_damage = 1
+		fall_damage = 0 -- 1
+		-- Dunno about this mechanic tbh, poltergeists can delete you
 	end
 	
 	total_prot = (helmet_protection + armor_protection)
@@ -424,7 +425,7 @@ function get_protection(shit, bone_id, k_ap)
 	bo_prot = booster_protection
 end
 
-function shit_booster(shit, bone_id, k_ap)
+function shit_booster(shit, bone_id, k_ap, flags)
 	get_protection(shit, bone_id and bone_id or "bip01_spine", k_ap and k_ap or 0)
 
 	damage = (shit.power * scale)
@@ -543,8 +544,6 @@ function shit_booster(shit, bone_id, k_ap)
 
 	PBA_a_ohc(db.actor, damage, shit.direction, shit.draftsman, bone_id)
 	
-	shit.power = 0.0
-	
 	health_gating_flag = health_gating_active 
 	or ( db.actor.health >= tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_trigger")) 
 		and db.actor.health - damage <= max(tonumber(ini_adb:r_string_ex("adb_actor", "health_gate_trigger") or 1), 0) )
@@ -558,6 +557,8 @@ function shit_booster(shit, bone_id, k_ap)
 			RegisterScriptCallback("actor_on_update", keep_alive)
 		end
 	end
+
+	old_health = db.actor.health
 	
 	if shit.type ~= hit.radiation then
 		if not health_gating_active then
@@ -586,6 +587,10 @@ function shit_booster(shit, bone_id, k_ap)
 		db.actor:change_radiation(damage)
 	end
 
+	new_health = db.actor.health
+
+	trace('Old health: %s // New health: %s', old_health, new_health)
+
 	if zone_dot == 0 then
 		if no_pen == 1 then
 			db.actor:cast_Actor():conditions():AddWound(damage * bleed * 0.25, hit_type, bone_id)
@@ -596,9 +601,9 @@ function shit_booster(shit, bone_id, k_ap)
 
 	if shit.type == hit.fire_wound or (shit.type ~= hit.radiation and damage >= 0.0025)  or (shit.type == hit.radiation and damage >= 0.005) then
 		if shit.type == hit.fire_wound then
-			combat_log('%s || Struck by %s (%s) with %s (%s) in the %s for %s damage.', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec, hitboxes[bone_id] or "whole body", damage)
+			combat_log('%s || Struck by %s (%s) with %s (%s) in the %s for %s damage. (%s -> %s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec, hitboxes[bone_id] or "whole body", tn(damage), tn(old_health), tn(db.actor.health))
 		else
-			combat_log('%s || Struck by %s (%s) for %s damage (%s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), damage, hit_type_id[shit.type])
+			combat_log('%s || Struck by %s (%s) for %s damage (%s). (%s -> %s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), tn(damage), hit_type_id[shit.type], tn(old_health), tn(db.actor.health))
 		end
 	end
 
@@ -610,6 +615,9 @@ function shit_booster(shit, bone_id, k_ap)
 		FX_Play("pfx_gibs", db.actor, shit, db.actor:bone_name(bone_id))
 		play_sound("gore\\hit_zombie_"..math.random(23), 1.0, db.actor)
 	end
+
+	shit.power = 0.0
+	--flags.ret_value = false
 end
 
 
@@ -718,13 +726,15 @@ function actor_on_before_hit(shit, bone_id, flags)
 		trace('Body part multiplier >> body_mult: x %s', body_mult)
 
 		if buckshot > 1 or ricochet == 0 then
-			shit_booster(shit, bone_id, k_ap)
+			shit_booster(shit, bone_id, k_ap, flags)
+			flags.ret_value = false
 			return
 		end
 		
 		if hit_last[shit.draftsman:id()] then
 			if time_global() - hit_last[shit.draftsman:id()] >= (1000/invul_frac) * invul_time_bullet then
-				shit_booster(shit, bone_id, k_ap)
+				shit_booster(shit, bone_id, k_ap, flags)
+				flags.ret_value = false
 				hit_last[shit.draftsman:id()] = time_global()
 			else
 				trace('Last hit was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_bullet))
@@ -732,7 +742,8 @@ function actor_on_before_hit(shit, bone_id, flags)
 				shit.power = 0
 			end
 		else
-			shit_booster(shit, bone_id, k_ap)
+			shit_booster(shit, bone_id, k_ap, flags)
+			flags.ret_value = false
 			hit_last[shit.draftsman:id()] = time_global()
 		end
 		
@@ -782,6 +793,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 			if zone_last[shit.draftsman:id()] then
 				if time_global() - zone_last[shit.draftsman:id()] >= (1000/invul_frac) * invul_time_zone_mine then
 					shit_booster(shit, bone_id)
+					flags.ret_value = false
 					zone_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_mine))
@@ -790,6 +802,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				end
 			else
 				shit_booster(shit, bone_id)
+				flags.ret_value = false
 				zone_last[shit.draftsman:id()] = time_global()
 			end
 			
@@ -802,6 +815,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 			if zone_field_last[shit.draftsman:id()] then
 				if time_global() - zone_field_last[shit.draftsman:id()] >= (1000/invul_frac) * invul_time_zone_field then
 					shit_booster(shit, bone_id)
+					flags.ret_value = false
 					zone_field_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_field))
@@ -810,6 +824,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				end
 			else
 				shit_booster(shit, bone_id)
+				flags.ret_value = false
 				zone_field_last[shit.draftsman:id()] = time_global()
 			end
 			
@@ -822,6 +837,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 			if zone_field_last[shit.draftsman:id()] then
 				if time_global() - zone_field_last[shit.draftsman:id()] >= (1000/invul_frac) * invul_time_zone_ball then
 					shit_booster(shit, bone_id)
+					flags.ret_value = false
 					zone_ball_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last damage tick was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_zone_ball))
@@ -830,6 +846,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				end
 			else
 				shit_booster(shit, bone_id)
+				flags.ret_value = false
 				zone_ball_last[shit.draftsman:id()] = time_global()
 			end
 			
@@ -840,6 +857,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 			if fall_last[shit.draftsman:id()] then	-- Tabling your own ID??? NONSENSE
 				if time_global() - fall_last[shit.draftsman:id()] >= (1000/invul_frac) * invul_time_strike_self then
 					shit_booster(shit, bone_id)
+					flags.ret_value = false
 					fall_last[shit.draftsman:id()] = time_global()
 				else
 					trace('Last fall damage (maybe) instance was less than %s ms ago, SKIPPING!', tn((1000/invul_frac) * invul_time_strike_self))
@@ -848,6 +866,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 				end
 			else
 				shit_booster(shit, bone_id)
+				flags.ret_value = false
 				fall_last[shit.draftsman:id()] = time_global()
 			end
 			
@@ -855,12 +874,14 @@ function actor_on_before_hit(shit, bone_id, flags)
 		end
 
 		shit_booster(shit, bone_id)
+		flags.ret_value = false
 		return
 	end
 	
 	if shit.type == hit.radiation then
 		shit_booster(shit, bone_id)
 		shit.power = 0
+		flags.ret_value = false
 		return
 	end
 end

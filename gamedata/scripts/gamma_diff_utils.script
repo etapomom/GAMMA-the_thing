@@ -172,7 +172,11 @@ end
 -- Checks if the player has a T3 PDA equipped.
 -- This is for the hitmarker function.
 function has_t3_pda()
-	local pda = db.actor:item_in_slot(8)
+	return false
+
+	-- Saving this for later.
+
+	--[[ pda = db.actor:item_in_slot(8)
 
 	if pda and pda:section() == "device_pda_3" then
 		local battery = pda:condition()
@@ -182,6 +186,7 @@ function has_t3_pda()
 	end
 	
 	return false
+	--]]
 end
 
 -- Returns the ammo section without "ammo_", "_bad" and "_verybad".
@@ -204,6 +209,10 @@ end
 -- This allows for way cleaner logging.
 function trim_number(number)
 	return tonumber(string.format("%.3f", number))
+end
+
+function trim_100(number)
+	return tonumber(string.format("%.2f", number * 100))
 end
 
 smallest 	= 0.0001

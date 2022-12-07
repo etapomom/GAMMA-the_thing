@@ -8,7 +8,11 @@ local ceil			= math.ceil
 local clamp			= _g.clamp
 local min			= math.min
 local max			= math.max
-local smallest				= 0.0000001
+local smallest		= 0.0000001
+local combat_log	= gamma_diff_utils.combat_log
+local trim_ammo		= gamma_diff_utils.trim_ammo
+local tn			= gamma_diff_utils.trim_number
+local tn100			= gamma_diff_utils.trim_100
 
 local ini_adb               = ini_file_ex("plugins\\gamma_actor.ltx")
 
@@ -37,12 +41,6 @@ end
 local function trace(str, ...)
 	if settings.debug == 2 then
 		printf("[G.A.M.M.A. THE THING] STALKERS: " .. str, ...)
-	end
-end
-
-local function combat_log(str, ...)
-	if settings.debug == 1 then
-		printf("" .. str, ...)
 	end
 end
 
@@ -268,6 +266,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 				trace('Last hit on %s was less than %s ms ago, SKIPPING!', npc:name(), (1000/invul_frac) * invul_time_bullet)
 				combat_log('%s || MULTIHIT LOCKOUT || You tried to hit %s (%s) with %s (%s).', time_global(), npc:section(), npc:id(), sec, ammo_section)
 				shit.power = 0.0
+				flags.ret_value = false
 				return
 			end
 		else
@@ -275,10 +274,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		end
 	end
 
-	-- Trim the ammo_section name
-	ammo_section = string.gsub(ammo_section, "ammo_", "")
-	ammo_section = string.gsub(ammo_section, "_bad", "")
-	ammo_section = string.gsub(ammo_section, "_verybad", "")
+	trim_ammo(ammo_section)
 
 	trace('%s || %s (%s) >> hit: %s // k_hit: %s // k_ap: %s', time_global(), sec, ammo_section, wpn_hit_power, k_hit, k_ap)
 
@@ -545,7 +541,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	end
 	
 	trace("Final damage: [" .. life_remove .. "]")
-	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage.', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], life_remove)
+	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage. (%s -> %s)', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], tn(life_remove), tn(old_health), tn(npc.health))
 
 	if has_t3_pda() == true then
 		local snd = xr_sound.get_safe_sound_object("gamma\\hitmarker_body")
@@ -556,7 +552,6 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		snd.volume = 2
 	end
 	
-	flags.ret_value = 0
 	shit.power = 0.0001
 	life_remove = nil
 	
