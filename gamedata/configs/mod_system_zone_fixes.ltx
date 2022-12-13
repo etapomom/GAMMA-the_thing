@@ -14,19 +14,23 @@ blowout_wind_time_end   = 500
 blowout_wind_power      = 0.5
 
 ![zone_mine_acidic_weak]
-max_start_power         = 0.85
+max_start_power         = 0.7
+use_secondary_hit       = false
 secondary_hit_power     = 0.0
 ![zone_mine_acidic_average]
-max_start_power         = 0.875
-secondary_hit_power     = 0.0005
+max_start_power         = 0.75
+use_secondary_hit       = false
+secondary_hit_power     = 0.0
 ![zone_mine_acidic_strong]
-max_start_power         = 0.9
-secondary_hit_power     = 0.00075
+max_start_power         = 0.8
+use_secondary_hit       = false
+secondary_hit_power     = 0.0
 
 ![zone_mine_acidic_big]
 $def_sphere             = 3
 max_start_power         = 0.9
-secondary_hit_power     = 0.001
+use_secondary_hit       = false
+secondary_hit_power     = 0.0
 
 ![zone_mine_chemical_weak]:zone_mine_acidic_weak
 ![zone_mine_chemical_average]:zone_mine_acidic_average

@@ -274,7 +274,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		end
 	end
 
-	trim_ammo(ammo_section)
+	ammo_section = trim_ammo(ammo_section)
 
 	trace('%s || %s (%s) >> hit: %s // k_hit: %s // k_ap: %s', time_global(), sec, ammo_section, wpn_hit_power, k_hit, k_ap)
 

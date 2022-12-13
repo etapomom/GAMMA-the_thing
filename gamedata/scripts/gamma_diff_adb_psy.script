@@ -53,6 +53,7 @@ function get_psyhelm()
 end
 
 function get_psy_res(shit)
+	--local adb = gamma_diff_adb
 	adb.get_protection(shit, "bip01_head", 0)
 
 	scale = adb.scale and adb.scale or 1

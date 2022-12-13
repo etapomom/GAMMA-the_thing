@@ -141,24 +141,34 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 		end
 	end
 	
-	trim_ammo(ammo_section)
+	ammo_section = trim_ammo(ammo_section)
 
 	local kind = ini_sys:r_string_ex(sec, "kind")
-	if 	kind == "w_sniper" and
-		(string.find(ammo_section, "7.92x33") 		or	-- 7.92x51
-		 string.find(ammo_section, "7.62x51") 		or
-		 string.find(ammo_section, "7.62x54") 		or
-		 string.find(ammo_section, "magnum_300") 	or	-- .338 Lapua
-		 string.find(ammo_section, "338_federal")	or
-		 string.find(ammo_section, "50_bmg") 		or
-		 string.find(ammo_section, "gauss")) 		then
-			sniper_rule = 1
-			trace('Weapon is a sniper! >> No overpen penalty.')
-	end
 
 	if kind == "w_melee" then
 		sniper_rule = 1
 		trace('Weapon is melee! >> No overpen penalty.')
+	end
+
+	local exclusions = nil
+	local exclusion_table = {}
+	if ini_monster:line_exist("overpen_exclusion", ammo_section) then
+		exclusions = ini_monster:r_string_ex("overpen_exclusion", ammo_section)
+		exclusions = str_explode(exclusions, ",")
+		for i = 1, #exclusions do
+			exclusion_table[#exclusion_table+1] = exclusions[i]
+		end
+
+		for i = 1, #exclusion_table do
+			to_check = exclusion_table[i]
+			if string.find(kind, to_check) then
+				sniper_rule = 1
+				break
+			elseif string.find(sec, to_check) then
+				sniper_rule = 1
+				break
+			end
+		end
 	end
 	
 	local barrel_condition_corrected = get_Barrel(wpn)

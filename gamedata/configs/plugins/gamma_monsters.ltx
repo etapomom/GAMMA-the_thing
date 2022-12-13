@@ -3,7 +3,7 @@
 ;;			  MONSTERS PLUGIN				;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;											;;
-;; [gbo_(monster section]:gbo_monster_base	;;
+;; [gbo_(monster section)]:gbo_monster_base	;;
 ;; (ammo_section)** = (multiplier)			;;
 ;; (...)									;;
 ;; crit_mul = (multiplier)					;;
@@ -22,7 +22,39 @@
 ;;	- Add support for DLTX Dyn. Mutants		;;
 ;;	- Create unique profiles?				;;
 ;;											;;
+;; [overpen_exclusion]                      ;;
+;; (ammo section)** = (weapon kind) or all  ;;
+;;                    , (weapon section)    ;;
+;; weapon_exclusion = (weapon section)*, ...;;
+;;                                          ;;
+;;                                          ;;
+;;  ***:    These can be                    ;;
+;;          - w_pistol                      ;;
+;;          - w_shotgun                     ;;
+;;          - w_rifle                       ;;
+;;          - w_sniper                      ;;
+;;          - w_explosive                   ;;
+;;          - w_misc                        ;;
+;;                                          ;;
+;;  *:  Sections are to be defined without  ;;
+;;      their "wpn_" prefix and without     ;;
+;;      attachments/scopes suffixes         ;;
+;;                                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+[overpen_exclusion]
+7.62x51_fmj             = sniper
+7.62x51_ap              = sniper
+7.62x54_7h1             = sniper
+7.62x54_7h14            = sniper
+7.62x54_ap              = sniper
+7.92x33_fmj             = sniper
+12.7x55_fmj             = sniper
+12.7x55_ap              = sniper
+magnum_300              = sniper
+338_federal             = sniper
+50_bmg                  = sniper
+gauss                   = sniper
 
 [gbo_monster_base]
 crit_spots				= 
