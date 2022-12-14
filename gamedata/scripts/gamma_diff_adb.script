@@ -698,9 +698,9 @@ function actor_on_before_hit(shit, bone_id, flags)
 			ammo_section = ini_sys:r_string_ex(sec, "ammo_class")
 		end
 
-		k_ap = ini_sys:r_float_ex(ammo_section, "k_ap") or 0
-
 		if ammo_section == nil then return end
+
+		k_ap = ini_sys:r_float_ex(ammo_section, "k_ap") or 0
 		
 		trace('Bullet hit >> weapon: %s // ammo: %s', sec, ammo_section)
 		
