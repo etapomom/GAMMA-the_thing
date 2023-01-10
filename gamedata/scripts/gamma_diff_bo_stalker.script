@@ -302,6 +302,18 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 			trace('NPC model does not have a profile defined. Defaulting to Berill/No Helmet.')
 			npc_viz = "actors\\stalker_bandit\\stalker_bandit_berill_nohelm_1"
 		end
+
+		--[[
+		-- Capture outfit stats from death_outfits.ltx
+		local death_outfits = ini_file_ex("items\\settings\\death_outfits.ltx")
+		if death_outfits then
+			if death_outfits:line_exist("outfits_by_visual", npc_viz) then
+				local npc_outfit = death_outfits:r_string_ex("outfits_by_visual", npc_viz)
+				npc_outfit = str_explode(npc_outfit, ",")
+
+			end
+		end
+		--]]
 		
 		local npc_armor_path = ini_capture:r_string_ex(npc_viz, "model_path")
 		ini_npc_armor = ini_file(npc_armor_path)

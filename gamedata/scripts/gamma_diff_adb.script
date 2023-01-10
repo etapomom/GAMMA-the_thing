@@ -100,7 +100,7 @@ function damage_math(shit, scale, total_prot, af_prot, bo_prot, ca_prot)
 
 	dm = (shit.power * sc) * (1 - tp) * (1 - ap) * (1 - bp) * (1 - cp)
 	trace('Damage: %s >> (%s x %s) x (1.0 - %s) x (1.0 - %s) x (1.0 - %s) x (1.0 - %s)', dm, shit.power, sc, tp, ap, bp, cp)
-	return dm
+	return dm or 0
 end
 
 local zone_last = {}
@@ -484,13 +484,17 @@ function shit_booster(shit, bone_id, k_ap)
 	PBA_a_obh(shit, bone_id, flags)		-- Call PBA before any armor math takes place. This makes the Black Angel useful.
 	wepl(shit, bone_id, flags)			-- Also call wepl before shit.power = 0 to ensure it actually works.
 
-	damage = damage_math(shit, scale, total_prot, af_prot, bo_prot, ca_prot)
+	damage = damage_math(shit, scale, total_prot, af_prot, bo_prot, ca_prot) or 0 -- or 0 just in case?
 	damage = damage * zone_mult
 
 	-- Psy stress compatibility
 	if stress_mcm then
 		if arszi_psy.get_psy_wound_stress and shit.power > 0 then
 			c_psy_hit_stress_multiplier = ( stress_mcm.get_config("hit_stress") or 2.8 ) / 100
+
+			--if arszi_psy.get_stress_multiplier then -- PSY STRESS 0.90
+			--	c_psy_hit_stress_multiplier = arszi_psy.get_stress_multiplier()
+			--end
 
 			local h = hit()
 			h.power = clamp((damage * 2) * c_psy_hit_stress_multiplier, 0, 0.5)
@@ -566,6 +570,10 @@ function shit_booster(shit, bone_id, k_ap)
 	end
 
 	old_health = db.actor.health
+
+	if shit.type == hit.telepatic then
+		damage = 0
+	end
 	
 	if shit.type ~= hit.radiation then
 		if not health_gating_active then
@@ -590,7 +598,9 @@ function shit_booster(shit, bone_id, k_ap)
 				trace('HEALTH GATE BYPASSED (Self inflicted)')
 			end
 		end
-	else
+	end
+	
+	if shit.type == hit.radiation then
 		db.actor:change_radiation(damage)
 	end
 
@@ -635,14 +645,20 @@ function actor_on_before_hit(shit, bone_id, flags)
 
 	if not db.actor:alive() then
 		shit.power = 0
+		flags.ret_value = 0
 		return
 	end
 
 	if shit.power == 0 then
+		--flags.ret_value = 0
 		return
 	end
 
-	if shit.type == 4 then return end
+	if shit.type == 4 then
+		--shit.power = 0
+		--flags.ret_value = 0
+		return 
+	end
 
 	self_inflicted = 0
 	if shit.draftsman:id() == db.actor:id() then
@@ -799,7 +815,7 @@ function actor_on_before_hit(shit, bone_id, flags)
 		end
 
 
-		if (string.find(shit.draftsman:name(), "_mine_") or zone_forced == 1) and shit.power <= 0.1 then
+		if (string.find(shit.draftsman:name(), "_mine_") or zone_forced == 1) and shit.power <= 0.2 then
 			
 			zone_dot = 1
 			
