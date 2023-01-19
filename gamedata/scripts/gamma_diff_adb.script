@@ -7,7 +7,7 @@ local min                   = math.min
 local max                   = math.max
 local wepl                  = wepl_hit_effect.actor_on_before_hit
 --local utjan					= utjan_traits
-local haru					= haru_skills
+--local haru					= haru_skills
 local health_gating_flag    = false
 local health_gating_active  = false
 
@@ -23,8 +23,8 @@ local ini_adb               = ini_file_ex("plugins\\gamma_actor.ltx")
 function wepl_hit_effect.actor_on_before_hit(shit, bone_id, flags) end
 
 -- Kill Haruka's Skills to ensure it works too
-function haru_skills.actor_on_before_hit(shit)
-end
+--function haru_skills.actor_on_before_hit(shit)
+--end
 
 local function load_defaults()
 	local t = {}
@@ -436,7 +436,7 @@ function shit_booster(shit, bone_id, k_ap)
 	get_protection(shit, bone_id and bone_id or "bip01_spine", k_ap and k_ap or 0)
 
 	damage = (shit.power * scale)
-
+	--[[
 	if haru_skills then
 		local valid_hit = ((shit.type == 5) or (shit.type == 6) or (shit.type == 7) or (shit.type == 8)) and 1 or 0
 		local is_monster = ini_sys:r_string_ex(shit.draftsman:section(), "faction") or ""
@@ -463,7 +463,7 @@ function shit_booster(shit, bone_id, k_ap)
 			end
 		end
 	end
-
+	--]]
 	damage = damage * (1 - total_prot)
 
 	zone_mult = 1

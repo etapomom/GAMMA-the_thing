@@ -467,6 +467,10 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	
 	shit.power = pbadamage.power
 
+	if dismemb and dismemb_mcm then	-- DISMEMBERMENT COMPAT
+		dismemb.npc_on_before_hit(npc, shit, bone_id)
+	end
+
 	if k_ap < custom_armor then
 		new_armor = custom_armor - (armor_loss_increment * 2)
 
@@ -537,10 +541,15 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	end
 
 	if npc.health <= 0 or npc:alive() == 0 then
-		PBA_odc(npc, db.actor)
+		PBA_odc(npc, shit.draftsman)
+
+		if dismemb and dismemb_mcm then	-- DISMEMBERMENT COMPAT
+			dismemb.npc_on_death_callback(npc, shit.draftsman)
+		end
+
 		npc.health = 0
 	else
-		PBA_ohc(npc, shit.power, shit.direction, db.actor, bone_id)
+		PBA_ohc(npc, shit.power, shit.direction, shit.draftsman, bone_id)
 	end
 
 	-- LUDICROUS GIBS

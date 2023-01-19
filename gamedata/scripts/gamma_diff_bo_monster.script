@@ -227,7 +227,12 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 
 	pbadamage = hit(shit)
 	PBA_m_obh(monster, pbadamage, bone_id, flags)
+
 	shit.power = pbadamage.power
+
+	if dismemb and dismemb_mcm then
+		dismemb.npc_on_before_hit(monster, shit, bone_id)
+	end
 
 	-- Process monster ltx
 	immunities_sec = ini_sys:r_string_ex(monster:section(), "immunities_sect") or nil
@@ -295,8 +300,13 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 	monster:set_health_ex(monster.health - life_remove)
 
 	if monster.health < 0 then
-		monster.health = 0
 		PBA_m_odc(monster, shit.draftsman)
+
+		if dismemb and dismemb_mcm then	-- DISMEMBERMENT COMPAT
+			dismemb.npc_on_death_callback(monster, shit.draftsman)
+		end
+
+		monster.health = 0
 	end
 	
 	-- LUDICROUS GIBS
