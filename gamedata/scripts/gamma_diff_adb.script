@@ -527,6 +527,10 @@ function shit_booster(shit, bone_id, k_ap)
 	if zone_dot == 1 then
 		degrade_math = degrade_math * max(tonumber(ini_adb:r_string_ex("adb_actor", "zone_mine_degrade") or 1), smallest)
 	end
+
+	if shit.type == hit.fire_wound and no_pen == 0 then
+		degrade_math = degrade_math * 0.5
+	end
 	
 	degrade_o = 0
 	degrade_h = 0
