@@ -310,6 +310,7 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 	end
 	
 	-- LUDICROUS GIBS
+	--[[
 	if monster.health <= 0 and (old_health - life_remove) <= gib_threshold then
 		if settings.gibs ~= 0 and math.random(1, 10) >= 4 then
 			FX_Play("pfx_gibs", monster, shit, bone_id)
@@ -317,6 +318,7 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 		end
 		shit.bone = "bip01_spine"
 	end
+	--]]
 	
 	trace("Final damage: [" .. life_remove .. "]")
 	

@@ -43,7 +43,7 @@ protection              = Burn              ;; Name of the stat to scale the DAM
 booster_type_def        = 8                 ;; ID of the booster item that affects the [protection] stat
 adjuster                = 0.5               ;; Multiplier for the [protection] stat                                     { 0.0   <=  adjuster    < +inf  }
 limiter                 = 0.95              ;; Caps [protection] to this value to prevent complete invulnerability      { 0.0   <   limiter     < 1.0   }
-absorb                  = 0.85              ;; Added to the [immunity] stat when taking damage.                         { -inf  <   absorb      < 1.0   }
+absorb                  = 0.85              ;; Multiplier to the [immunity] stat when taking damage.                    { -inf  <   absorb      < 1.0   } ==> degrade / (1.0 - absorb)
 bleed                   = 0.0               ;; % of the received damage to be added as bleeding.                        { 0.0   <=  bleed       < +inf  }
 scale                   = 1.95              ;; Multiplier for the overall damage (both to actor and armor)              { 0.0   <   scale       < +inf  }
 arti                    = 1.0               ;; Multiplier for ARTEFACTS' stats                                          { 0.0   <   arti        < +inf  }
@@ -106,8 +106,8 @@ hit_type                = 5
 immunity 			    = wound_immunity
 protection 			    = Wound
 booster_type_def 	    = 16
-adjuster 			    = 0.65
-limiter 			    = 0.90
+adjuster 			    = 0.75
+limiter 			    = 0.95
 absorb				    = -0.15
 bleed				    = 1.0
 scale				    = 0.6

@@ -3,7 +3,7 @@ op_id = "gamma_diff"
 op = { 
 	id = "gamma_diff", sh = true, gr = {
 		{ id = "particles",	type = "list", val = 2, content = { {0, "pfx_disable"}, {1, "pfx_mobs"}, {2, "pfx_both"} }, 		def = 1		},
-		{ id = "gibs",		type = "list", val = 2, content = { {0, "gib_disable"}, {1, "gib_mobs"}, {2, "gib_both"} }, 		def = 0		},
+		--{ id = "gibs",		type = "list", val = 2, content = { {0, "gib_disable"}, {1, "gib_mobs"}, {2, "gib_both"} }, 		def = 0		},
 		{ id = "debug",		type = "list", val = 2, content = { {0, "dev_disable"}, {1, "dev_simple"}, {2, "dev_full"} }, 		def = 1		},
 	}
 }

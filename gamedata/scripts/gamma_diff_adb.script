@@ -605,7 +605,7 @@ function shit_booster(shit, bone_id, k_ap)
 	end
 	
 	if shit.type == hit.radiation then
-		db.actor:change_radiation(damage)
+		db.actor:change_radiation(damage * 2.0)
 	end
 
 	new_health = db.actor.health

@@ -553,6 +553,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	end
 
 	-- LUDICROUS GIBS
+	--[[
 	if npc.health <= 0 and (old_health - life_remove) <= gib_threshold then
 		if settings.gibs ~= 0 and math.random(1, 10) >= 4 then
 			trace('Rolled ludicrous gibs!')
@@ -560,6 +561,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 			play_sound("gore\\hit_zombie_"..math.random(23), 0.5, npc)
 		end
 	end
+	--]]
 	
 	trace("Final damage: [" .. life_remove .. "]")
 	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage. (%s -> %s)', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], tn(life_remove), tn(old_health), tn(npc.health))
