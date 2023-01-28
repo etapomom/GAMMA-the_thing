@@ -129,8 +129,8 @@ end
 pba = perk_based_artefacts
 pba.artefact_props.af_repei =
 {
-	effect_time = 5,
-	bleed_coeff = 0.0005, -- Bigger number => bigger bleeding damage
+	effect_time = 7,
+	bleed_coeff = 0.0015, -- Bigger number => bigger bleeding damage
 	hit_coeff = 0.5,
 	on_before_hit = function(self, actor, artefact_count, artefact_ids, artefact_names, npc, s_hit, bone_id, flags)
 		local hit_k = self.hit_coeff

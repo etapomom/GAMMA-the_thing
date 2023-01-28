@@ -230,7 +230,12 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 
 	shit.power = pbadamage.power
 
-	if dismemb and dismemb_mcm then
+	eco = 0
+	if ammo_section == "23_eco" then
+		eco = 1
+	end
+
+	if dismemb and dismemb_mcm and eco == 0 then
 		dismemb.npc_on_before_hit(monster, shit, bone_id)
 	end
 
@@ -286,6 +291,15 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 
 	life_remove = shit.power
 
+	if eco == 1 then
+		trace("ECO-23 Hit!")
+		if crit == 1 then
+			life_remove = monster.health * 0.5 * bone_mult
+		else
+			life_remove = monster.health * 0.5
+		end
+	end
+
 	PBA_m_ohc(monster, life_remove, shit.direction, shit.draftsman, bone_id)
 	
 	local gib_threshold = -0.5
@@ -302,7 +316,7 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 	if monster.health < 0 then
 		PBA_m_odc(monster, shit.draftsman)
 
-		if dismemb and dismemb_mcm then	-- DISMEMBERMENT COMPAT
+		if dismemb and dismemb_mcm and eco == 0 then	-- DISMEMBERMENT COMPAT
 			dismemb.npc_on_death_callback(monster, shit.draftsman)
 		end
 
