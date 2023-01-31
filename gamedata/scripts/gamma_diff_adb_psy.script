@@ -140,9 +140,11 @@ function actor_on_before_hit(shit, bone_id, flags)
 	change_psy_health(-damage)
 	trace('Final psy damage: %s', damage)
 
+	--[[
 	if damage > 0.001 then
 		combat_log("%s || PSY || Sanity decreased by %s", time_global(), damage)
 	end
+	--]]
 
 	shit.power = 0
 	flags.ret_value = false

@@ -82,8 +82,7 @@ end
 local flags = { ret_value = true }
 
 function PBA_a_obd(whoID, flags)
-	trace('Firing PBA >> actor_on_before_death')
-	flags.ret_value = false
+	trace('Firing PBA >> actor_on_before_death')	flags.ret_value = false
 	pba.process_artefacts(pba.artefact_on_before_death_functions, whoID, flags)
 end
 
@@ -595,9 +594,11 @@ function shit_booster(shit, bone_id, k_ap)
 					db.actor:set_health_ex(max( (db.actor.health - damage), min_health))
 				end
 			else
+
 				if (db.actor.health - damage) <= 0 then
 					PBA_a_obd(db.actor, flags)
 				end
+				
 				db.actor:set_health_ex(db.actor.health - damage)
 				trace('HEALTH GATE BYPASSED (Self inflicted)')
 			end
@@ -662,6 +663,11 @@ function actor_on_before_hit(shit, bone_id, flags)
 		--shit.power = 0
 		--flags.ret_value = 0
 		return 
+	end
+
+	if (shit.power == 0.001 and shit.impulse == 0.001) then
+		flags.ret_value = 0
+		return
 	end
 
 	self_inflicted = 0
