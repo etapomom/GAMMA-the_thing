@@ -247,6 +247,12 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	
 	local barrel_condition_corrected = get_Barrel(wpn)
 
+	local weapon_speed		= utils_item.get_param(sec, wpn_id, "bullet_speed", "float", true) or 1000
+	local bullet_speed		= ini_sys:r_float_ex(ammo_section, "k_bullet_speed", "float", true) or 1
+	local f_speed			= normalize((weapon_speed * bullet_speed) * 0.7, 0, 1000)
+	local f_time			= ( 1 + ((dist * 2.0) / (f_speed * 0.5)) / 30 )		-- Values are extreme because this is highly experimental!!
+	local f_dist			= ( 1 + (dist + (1 + f_time)) / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )))
+
 	local bone_name			= Bone_IDs[bone_id]
 
 	invul_frac 				= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_frac") or 1), ceil(smallest))
@@ -408,12 +414,12 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	end
 	
 	local k_ap = k_ap * custom_ap_scale * barrel_condition_corrected
-	k_ap = k_ap / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * isgres
+	k_ap = k_ap / f_dist * isgres
 
 	trace('Final AP >> %s', k_ap)
 
-	shit.power = wpn_hit_power / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * k_hit * (body_mult * 2) * custom_ap_scale * 1.1 * barrel_condition_corrected * sinres
-	trace('Raw damage: %s >> %s / (1 + %s / 200 x (%s x 0.5 /(1 - %s + 0.1))) x %s x %s x %s x 1.1 x %s x %s', shit.power, wpn_hit_power, dist, air_res, air_res, k_hit, (body_mult * 2), custom_ap_scale, barrel_condition_corrected, sinres)
+	shit.power = wpn_hit_power / f_dist * k_hit * (body_mult * 2) * custom_ap_scale * 1.1 * barrel_condition_corrected * sinres
+	--trace('Raw damage: %s >> %s / (1 + %s / 200 x (%s x 0.5 /(1 - %s + 0.1))) x %s x %s x %s x 1.1 x %s x %s', shit.power, wpn_hit_power, dist, air_res, air_res, k_hit, (body_mult * 2), custom_ap_scale, barrel_condition_corrected, sinres)
 
 	-- Calculate armor degrading
 	 
@@ -427,7 +433,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		end
 	end
 	 
-	local armor_loss_increment = tonumber(k_ap * 0.05) / armor_mult
+	local armor_loss_increment = tonumber(k_ap * 0.1) / armor_mult
 	if leg_meta_sniper_null == 0 then
 		armor_loss_increment = armor_loss_increment * 6.0
 		armor_loss_increment = math.max(armor_loss_increment, armor_loss_increment * math.max(k_hit, wpn_hit_power))

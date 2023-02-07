@@ -116,6 +116,12 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 	
 	local sniper_rule		= 0
 
+	local weapon_speed		= utils_item.get_param(sec, wpn_id, "bullet_speed", "float", true) or 1000
+	local bullet_speed		= ini_sys:r_float_ex(ammo_section, "k_bullet_speed", "float", true) or 1
+	local f_speed			= normalize((weapon_speed * bullet_speed) * 0.7, 0, 1000)
+	local f_time			= ( 1 + ((dist * 2.0) / (f_speed * 0.5)) / 30 )		-- Values are extreme because this is highly experimental!!
+	local f_dist			= ( 1 + (dist + (1 + f_time)) / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )))
+
 	invul_frac 				= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_frac") or 1), ceil(smallest))
 	invul_time_bullet 		= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_bullet") or 1), 0)
 
@@ -223,7 +229,7 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 		trace('Monster has damage multiplier defined in [%s], >> armor: %s', who, spec_monster_mult)
 	end
 
-	shit.power = wpn_hit_power / ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 ))) * k_hit * mutant_mult * ammo_mult * spec_monster_mult * bone_mult * cqc_mult * barrel_condition_corrected
+	shit.power = wpn_hit_power / f_dist * k_hit * mutant_mult * ammo_mult * spec_monster_mult * bone_mult * cqc_mult * barrel_condition_corrected
 
 	pbadamage = hit(shit)
 	PBA_m_obh(monster, pbadamage, bone_id, flags)
