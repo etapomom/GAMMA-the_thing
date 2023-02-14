@@ -481,14 +481,14 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		new_armor = custom_armor - (armor_loss_increment * 2)
 
 		if k_ap > custom_armor then
-			shit.power = shit.power * custom_hitfraction
+			shit.power = shit.power * (custom_hitfraction / 1.125)
 			FX_Play("pfx_armored_flesh", npc, shit, npc:bone_name(bone_id))
 		else
-			shit.power = 0.1 * shit.power * custom_hitfraction * wm_size * 45
+			shit.power = 0.05 * shit.power * (custom_hitfraction / 1.25) * wm_size * 45
 			FX_Play("pfx_armor", npc, shit, npc:bone_name(bone_id))
 		end
 	else
-		shit.power = shit.power * (math.min(custom_hitfraction * 2, 1.0))
+		shit.power = shit.power * (math.min(custom_hitfraction * 1.25, 1.0))
 		FX_Play("pfx_flesh", npc, shit, npc:bone_name(bone_id))
 	end
 
