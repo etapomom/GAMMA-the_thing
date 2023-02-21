@@ -435,34 +435,7 @@ function shit_booster(shit, bone_id, k_ap)
 	get_protection(shit, bone_id and bone_id or "bip01_spine", k_ap and k_ap or 0)
 
 	damage = (shit.power * scale)
-	--[[
-	if haru_skills then
-		local valid_hit = ((shit.type == 5) or (shit.type == 6) or (shit.type == 7) or (shit.type == 8)) and 1 or 0
-		local is_monster = ini_sys:r_string_ex(shit.draftsman:section(), "faction") or ""
-		if valid_hit then
-			haru_skills.increase_skill("survival", damage * 200)
-			local survival_resistance = haru_skills.skills_stats["survival"].resistance
-			shit.power = shit.power * survival_resistance
-		end
-		
-		if utjan_traits then
-			if (string.find(is_monster, "monster")) and valid_hit and utjan_traits.traits_list["mutant_resist"].enabled then
-				shit.power = shit.power * utjan_traits.traits_list["mutant_resist"].multiplier
-			end
 
-			local gun = db.actor:active_item()
-			if gun and IsWeapon(gun) and (IsItem("fake_ammo_wpn", gun:section())) and valid_hit then
-				if utjan_traits.traits_list["melee_defense"].enabled == true then
-					shit.power = shit.power * utjan_traits.traits_list["melee_defense"].multiplier
-				end
-			end
-
-			if utjan_traits.traits_list["lone_stalker"].enabled and size_table(axr_companions.companion_squads) == 0 then
-				shit.power = shit.power * utjan_traits.traits_list["lone_stalker"].dmg_resist_mult
-			end
-		end
-	end
-	--]]
 	damage = damage * (1 - total_prot)
 
 	zone_mult = 1
@@ -486,14 +459,14 @@ function shit_booster(shit, bone_id, k_ap)
 	damage = damage_math(shit, scale, total_prot, af_prot, bo_prot, ca_prot) or 0 -- or 0 just in case?
 	damage = damage * zone_mult
 
+	if shit.type == hit.fire_wound then
+		damage = damage / f_dist
+	end
+
 	-- Psy stress compatibility
 	if stress_mcm then
 		if arszi_psy.get_psy_wound_stress and shit.power > 0 then
 			c_psy_hit_stress_multiplier = ( stress_mcm.get_config("hit_stress") or 2.8 ) / 100
-
-			--if arszi_psy.get_stress_multiplier then -- PSY STRESS 0.90
-			--	c_psy_hit_stress_multiplier = arszi_psy.get_stress_multiplier()
-			--end
 
 			local h = hit()
 			h.power = clamp((damage * 2) * c_psy_hit_stress_multiplier, 0, 0.5)
@@ -623,7 +596,7 @@ function shit_booster(shit, bone_id, k_ap)
 
 	if shit.type ~= hit.radiation or (shit.type == hit.radiation and damage >= 0.005) then
 		if shit.type == hit.fire_wound then
-			combat_log('%s || Struck by %s (%s) with %s (%s) in the %s for %s damage. (%s -> %s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec, hitboxes[bone_id] or "whole body", tn(damage), tn(old_health), tn(db.actor.health))
+			combat_log('%s || Struck by %s (%s) with %s (%s) in the %s for %s damage from %s meters (%sx). (%s -> %s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), wpn_sec, amm_sec, hitboxes[bone_id] or "whole body", tn(damage), tn(dist), tn(1 / f_dist), tn(old_health), tn(db.actor.health))
 		else
 			combat_log('%s || Struck by %s (%s) for %s damage (%s). (%s -> %s)', time_global(), shit.draftsman:section(), shit.draftsman:id(), tn(damage), hit_type_id[shit.type], tn(old_health), tn(db.actor.health))
 		end
@@ -716,6 +689,8 @@ function actor_on_before_hit(shit, bone_id, flags)
 		local sec = wpn:section()
 		local wpn_id = wpn:id()
 
+		dist = db.actor:position():distance_to(shit.draftsman:position()) or 1
+
 		local ammo_type_number = wpn:get_ammo_type()
 		local ammo_list = utils_item.get_ammo(sec, wpn_id)
 		local ammo_section = ammo_list[ammo_type_number+1]
@@ -726,18 +701,42 @@ function actor_on_before_hit(shit, bone_id, flags)
 
 		if ammo_section == nil then return end
 
-		k_ap = ini_sys:r_float_ex(ammo_section, "k_ap") or 0
+		k_ap 	= ini_sys:r_float_ex(ammo_section, "k_ap") or 0
+		air_res	= ini_sys:r_float_ex(ammo_section, "k_air_resistance") or 0.05
 		
 		trace('Bullet hit >> weapon: %s // ammo: %s', sec, ammo_section)
+
+		-----------------------------------------------------------
+		local kind				= ini_sys:r_string_ex(sec, "kind")
+		local k_mod				= 3.0
+
+		if kind == "w_sniper" then
+			k_mod 				= 9.0
+		end
+
+		local weapon_speed		= utils_item.get_param(sec, wpn_id, "bullet_speed", "float", true) or 1000
+		local bullet_speed		= ini_sys:r_float_ex(ammo_section, "k_bullet_speed", "float", true) or 1
+		local f_speed			= weapon_speed * bullet_speed * 0.7 --normalize((weapon_speed * bullet_speed) * 0.7, 0, 1000)
+		local f_time			= (dist / f_speed) * k_mod			-- Values are extreme because this is highly experimental!!
+		local m_dist			= f_time * f_speed
+		f_dist					= ( 1 + m_dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )))
+		local o_dist			= ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )) )
+
+		local eff_dist			= math.min(math.max(smallest, ini_adb:r_float_ex("gbo_ranges", kind) or 1.0), 1.0) or smallest
+		eff_dist				= math.ceil(f_speed * eff_dist)
+
+		if dist <= eff_dist then
+			f_dist = 1.0
+		else
+			f_time = ((dist - eff_dist) / f_speed) * k_mod
+			m_dist = f_time * f_speed
+			f_dist = ( 1 + (m_dist) / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )) )
+			f_dist = math.max(1.0, f_dist)
+		end
+		-----------------------------------------------------------
 		
 		buckshot = ini_sys:r_float_ex(ammo_section, "buck_shot") and ini_sys:r_float_ex(ammo_section, "buck_shot") or 0
 		ricochet = ini_sys:r_bool_ex(ammo_section, "allow_ricochet") and ini_sys:r_bool_ex(ammo_section, "allow_ricochet") or true
-		if buckshot > 1 then
-			--old_power = shit.power
-			--shit.power = shit.power * buckshot
-			trace('Ammo has multiple pellets >> buckshot: %s', buckshot)
-			--buckshot = 1
-		end
 
 		-- Trim the ammo_section name
 		ammo_section = trim_ammo(ammo_section)

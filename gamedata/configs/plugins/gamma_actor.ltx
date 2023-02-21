@@ -7,6 +7,13 @@
 ;;                                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+[gbo_ranges]
+w_pistol                = 0.05              ;; Effective ranges for all weapon classes
+w_shotgun               = 0.045             ;; Formula is: [Muzzle Velocity] x the value assigned to the class.
+w_smg                   = 0.033             ;; You get full damage and AP up to that range and only after that
+w_rifle                 = 0.03              ;; you'll start losing damage and AP.
+w_sniper                = 0.067             ;; NOTE: AP decays at a much slower rate!
+
 [adb_actor]
 invul_frac              = 120               ;; Hz to base the invul frames on   { 1 <= this < +inf }
 invul_time_bullet       = 4                 ;; i.e. this would be (1/120)       { 0 <= this < +inf }

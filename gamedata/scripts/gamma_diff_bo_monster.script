@@ -116,11 +116,34 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 	
 	local sniper_rule		= 0
 
+	----------------------------------------------------------
+	local kind				= ini_sys:r_string_ex(sec, "kind")
+	local k_mod				= 3.0
+
+	if kind == "w_sniper" then
+		k_mod 				= 9.0
+	end
+
 	local weapon_speed		= utils_item.get_param(sec, wpn_id, "bullet_speed", "float", true) or 1000
 	local bullet_speed		= ini_sys:r_float_ex(ammo_section, "k_bullet_speed", "float", true) or 1
-	local f_speed			= normalize((weapon_speed * bullet_speed) * 0.7, 0, 1000)
-	local f_time			= ( 1 + ((dist * 4.0) / (f_speed * 0.25)) / 30 )		-- Values are extreme because this is highly experimental!!
-	local f_dist			= ( 1 + (dist + (1 + f_time)) / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )))
+	local f_speed			= weapon_speed * bullet_speed * 0.7 --normalize((weapon_speed * bullet_speed) * 0.7, 0, 1000)
+	local f_time			= (dist / f_speed) * k_mod			-- Values are extreme because this is highly experimental!!
+	local m_dist			= f_time * f_speed
+	local f_dist			= ( 1 + m_dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )))
+	local o_dist			= ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )) )
+
+	local eff_dist			= math.min(math.max(smallest, ini_adb:r_float_ex("gbo_ranges", kind) or 1.0), 1.0) or smallest
+	eff_dist				= math.ceil(f_speed * eff_dist)
+
+	if dist <= eff_dist then
+		f_dist = 1.0
+	else
+		f_time = ((dist - eff_dist) / f_speed) * k_mod
+		m_dist = f_time * f_speed
+		f_dist = ( 1 + (m_dist) / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )) )
+		f_dist = math.max(1.0, f_dist)
+	end
+	----------------------------------------------------------
 
 	invul_frac 				= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_frac") or 1), ceil(smallest))
 	invul_time_bullet 		= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_bullet") or 1), 0)
@@ -148,8 +171,6 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 	end
 	
 	ammo_section = trim_ammo(ammo_section)
-
-	local kind = ini_sys:r_string_ex(sec, "kind")
 
 	if kind == "w_melee" then
 		sniper_rule = 1
@@ -343,9 +364,9 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 	trace("Final damage: [" .. life_remove .. "]")
 	
 	if crit == 1 then
-		combat_log('%s || Struck %s (%s) with %s (%s) as a critical hit (x%s) for %s damage. (%s -> %s)', time_global(), monster:section(), monster:id(), sec, ammo_section, bone_mult, tn(life_remove), tn(old_health), tn(monster.health))
+		combat_log('%s || Struck %s (%s) with %s (%s) as a critical hit (x%s) for %s damage from %s meters (%sx). (%s -> %s)', time_global(), monster:section(), monster:id(), sec, ammo_section, bone_mult, tn(life_remove), tn(dist), tn(1 / f_dist), tn(old_health), tn(monster.health))
 	else
-		combat_log('%s || Struck %s (%s) with %s (%s) for %s damage. (%s -> %s)', time_global(), monster:section(), monster:id(), sec, ammo_section, tn(life_remove), tn(old_health), tn(monster.health))
+		combat_log('%s || Struck %s (%s) with %s (%s) for %s damage from %s meters (%sx). (%s -> %s)', time_global(), monster:section(), monster:id(), sec, ammo_section, tn(life_remove), tn(dist), tn(1 / f_dist), tn(old_health), tn(monster.health))
 	end
 
 	if has_t3_pda() == true then

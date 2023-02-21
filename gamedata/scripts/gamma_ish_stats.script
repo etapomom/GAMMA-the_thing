@@ -58,6 +58,30 @@ function get_arti_protection(obj, sec, type)
     return 0
 end
 
+function get_weapon_eff_range(obj, sec)
+    local ini_adb = ini_file_ex("plugins\\gamma_actor.ltx")
+
+    if obj then
+		local cobj = obj:cast_Weapon()
+		if (not cobj) then 
+			return 0 
+		end
+		local id = obj and obj:id()
+		local bullet_speed = utils_item.get_param(sec, obj and obj:id(), "bullet_speed", "float", true)
+        local kind = utils_item.get_param(sec, obj and obj:id(), "kind", "string", true)
+
+        local drag = math.min(math.max(smallest, ini_adb:r_float_ex("gbo_ranges", kind)), 1.0) or 0.1
+
+		local ammo_list = utils_item.get_ammo(obj:section(), id)
+		if ammo_list[1] then
+			local k_bullet_speed = ini_sys:r_float_ex(ammo_list[1], "k_bullet_speed") or 1
+			bullet_speed = (bullet_speed ~= 0) and (k_bullet_speed*bullet_speed) or k_bullet_speed
+			bullet_speed = bullet_speed * 0.70
+		end
+        return math.ceil(bullet_speed * drag)
+	end
+end
+
 function ish_item_stats.apply_compatibility_patches()
     
     ish()
@@ -81,5 +105,7 @@ function ish_item_stats.apply_compatibility_patches()
     utils_ui.stats_table["artefact"]["fire_wound_immunity"]     = { index= 13,  typ= "float",   name= "ui_inv_outfit_fire_wound_protection",    icon_p= "ui_am_propery_01",     icon_n= "ui_am_prop_fire_wound_negative",   track= false,   magnitude= 100, unit= "st_perc",    condition= false,    compare= false, sign= true, show_always= false, value_functor= {"gamma_ish_stats","get_arti_protection",6} }
     utils_ui.stats_table["artefact"]["explosion_immunity"]      = { index= 14,  typ= "float",   name= "ui_inv_outfit_explosion_protection",     icon_p= "ui_am_prop_explo",     icon_n= "ui_am_prop_explo_minus",           track= false,   magnitude= 100, unit= "st_perc",    condition= false,    compare= false, sign= true, show_always= false, value_functor= {"gamma_ish_stats","get_arti_protection",8} }
     utils_ui.stats_table["artefact"]["strike_immunity"]         = { index= 15,  typ= "float",   name= "ui_inv_outfit_strike_protection",        icon_p= "ui_am_prop_strike",    icon_n= "ui_am_prop_strike_minus",          track= false,   magnitude= 100, unit= "st_perc",    condition= false,    compare= false, sign= true, show_always= false, value_functor= {"gamma_ish_stats","get_arti_protection",7} }
+
+    utils_ui.stats_table["weapon"]["eff_range"]                 = { index= 110, typ= "float",   name= "ui_inv_weapon_eff_range",                icon_p= "ui_wp_propery_05",     icon_n= "",                                 track= false,   magnitude= 1, unit= "st_stat_meters", compare= false, sign= false, show_always= true, value_functor= {"gamma_ish_stats","get_weapon_eff_range"}}
 
 end

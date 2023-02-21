@@ -55,6 +55,7 @@ ini_bones			= ini_file_ex("creatures\\grok_bo_bone_profiles.ltx")
 ini_damage			= ini_file_ex("creatures\\damages.ltx")
 ini_stalkers		= ini_file_ex("plugins\\gamma_stalkers.ltx")
 ini_particles		= ini_file_ex("plugins\\gamma_particles.ltx")
+ini_adb				= ini_file_ex("plugins\\gamma_actor.ltx")
 leg_meta_sniper_null = 1
 sniper_bad_bone_shit_reduce = 1
 
@@ -247,13 +248,39 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	
 	local barrel_condition_corrected = get_Barrel(wpn)
 
+	local kind				= ini_sys:r_string_ex(sec, "kind")
+	local k_mod				= 4.5
+
+	if kind == "w_sniper" then
+		k_mod 				= 9.0
+	end
+
 	local weapon_speed		= utils_item.get_param(sec, wpn_id, "bullet_speed", "float", true) or 1000
 	local bullet_speed		= ini_sys:r_float_ex(ammo_section, "k_bullet_speed", "float", true) or 1
-	local f_speed			= normalize((weapon_speed * bullet_speed) * 0.7, 0, 1000)
-	local f_time			= ( 1 + ((dist * 4.0) / (f_speed * 0.25)) / 30 )		-- Values are extreme because this is highly experimental!!
-	local f_dist			= ( 1 + (dist + (1 + f_time)) / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )))
+	local f_speed			= weapon_speed * bullet_speed * 0.7 --normalize((weapon_speed * bullet_speed) * 0.7, 0, 1000)
+	local f_time			= (dist / f_speed) * k_mod			-- Values are extreme because this is highly experimental!!
+	local m_dist			= f_time * f_speed
+	local f_dist			= ( 1 + m_dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )))
+	local o_dist			= ( 1 + dist / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )) )
+
+	local eff_dist			= math.min(math.max(smallest, ini_adb:r_float_ex("gbo_ranges", kind) or 1.0), 1.0) or smallest
+	eff_dist				= math.ceil(f_speed * eff_dist)
+
+	if dist <= eff_dist then
+		f_dist = 1.0
+	else
+		f_time = ((dist - eff_dist) / f_speed) * k_mod
+		m_dist = f_time * f_speed
+		f_dist = ( 1 + (m_dist) / 200 * ( air_res * 0.5 / ( 1 - air_res + 0.1 )) )
+		f_dist = math.max(1.0, f_dist)
+	end
+
+	trace('Hit distance >> %s m // Effective distance >> %s m', dist, eff_dist)
+	trace('Damage Falloff >> %sx', tn(1 / f_dist))
 
 	local bone_name			= Bone_IDs[bone_id]
+
+	local leg_meta_sniper_null = 1
 
 	invul_frac 				= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_frac") or 1), ceil(smallest))
 	invul_time_bullet 		= max(tonumber(ini_adb:r_string_ex("adb_actor", "invul_time_bullet") or 1), 0)
@@ -285,7 +312,6 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	trace('%s || %s (%s) >> hit: %s // k_hit: %s // k_ap: %s', time_global(), sec, ammo_section, wpn_hit_power, k_hit, k_ap)
 
 	-- Disable sniper rounds leg-shot bonus
-	local kind = ini_sys:r_string_ex(sec, "kind")
 	if 	kind == "w_sniper" and
 		(string.find(ammo_section, "7.92x33") 		or	-- 7.92x51
 		 string.find(ammo_section, "7.62x51") 		or
@@ -414,12 +440,13 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	end
 	
 	local k_ap = k_ap * custom_ap_scale * barrel_condition_corrected
-	k_ap = k_ap / f_dist * isgres
+	k_ap = k_ap / math.max(1.0, (f_dist / 1.5)) * isgres
 
 	trace('Final AP >> %s', k_ap)
 
 	shit.power = wpn_hit_power / f_dist * k_hit * (body_mult * 2) * custom_ap_scale * 1.1 * barrel_condition_corrected * sinres
 	--trace('Raw damage: %s >> %s / (1 + %s / 200 x (%s x 0.5 /(1 - %s + 0.1))) x %s x %s x %s x 1.1 x %s x %s', shit.power, wpn_hit_power, dist, air_res, air_res, k_hit, (body_mult * 2), custom_ap_scale, barrel_condition_corrected, sinres)
+	--trace('Raw damage >> %s')
 
 	-- Calculate armor degrading
 	 
@@ -433,7 +460,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		end
 	end
 	 
-	local armor_loss_increment = tonumber(k_ap * 0.1) / armor_mult
+	local armor_loss_increment = tonumber(k_ap * 0.05) / armor_mult
 	if leg_meta_sniper_null == 0 then
 		armor_loss_increment = armor_loss_increment * 6.0
 		armor_loss_increment = math.max(armor_loss_increment, armor_loss_increment * math.max(k_hit, wpn_hit_power))
@@ -523,28 +550,10 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	shit.power = shit.power * difficulty_multiplier[game_num]
 	
 	life_remove = shit.power
-	
-	local gib_threshold = -0.67
-	if string.find(ammo_section, "buck") or string.find(ammo_section, "shrapnel") then
-		gib_threshold = gib_threshold / 4
-	end
-	if string.find(ammo_section, "gauss") then
-		gib_threshold = 0.0
-	end
-	
-	if surrender_bonus ~= 0 then
-		life_remove = life_remove / 2.0
-	end
 
 	old_health = npc.health
-	
-	if surrender_bonus == 1 then
-		trace('NPC is surrendering >> kill instantly.')
-		life_remove = npc.health
-		npc:set_health_ex(0.0)
-	else
-		npc:set_health_ex(npc.health - life_remove)
-	end
+
+	npc:set_health_ex(npc.health - life_remove)
 
 	if npc.health <= 0 or npc:alive() == 0 then
 		PBA_odc(npc, shit.draftsman)
@@ -552,34 +561,13 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 		if dismemb and dismemb_mcm then	-- DISMEMBERMENT COMPAT
 			dismemb.npc_on_death_callback(npc, shit.draftsman)
 		end
-
-		npc.health = 0
-	else
-		PBA_ohc(npc, shit.power, shit.direction, shit.draftsman, bone_id)
 	end
-
-	-- LUDICROUS GIBS
-	--[[
-	if npc.health <= 0 and (old_health - life_remove) <= gib_threshold then
-		if settings.gibs ~= 0 and math.random(1, 10) >= 4 then
-			trace('Rolled ludicrous gibs!')
-			FX_Play("pfx_gibs", npc, shit, npc:bone_name(bone_id))
-			play_sound("gore\\hit_zombie_"..math.random(23), 0.5, npc)
-		end
-	end
-	--]]
+	
+	PBA_ohc(npc, shit.power, shit.direction, shit.draftsman, bone_id)
 	
 	trace("Final damage: [" .. life_remove .. "]")
-	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage. (%s -> %s)', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], tn(life_remove), tn(old_health), tn(npc.health))
 
-	if has_t3_pda() == true then
-		local snd = xr_sound.get_safe_sound_object("gamma\\hitmarker_body")
-		if hitboxes[bone_id] == "head" then
-			snd = xr_sound.get_safe_sound_object("gamma\\hitmarker_head")
-		end
-		snd:play_at_pos(db.actor, db.actor:position())
-		snd.volume = 2
-	end
+	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage from %s meters (%sx // %sx). (%s -> %s)', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], tn(life_remove), tn(dist), tn(1 / f_dist), tn(1 / (f_dist / 1.5)), tn(old_health), tn(npc.health))
 	
 	shit.power = 0.0001
 	life_remove = nil
