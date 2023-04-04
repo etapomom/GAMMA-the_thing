@@ -115,6 +115,8 @@ function monster_on_before_hit(monster, shit, bone_id, flags)
 	local dist 				= monster_pos:distance_to(shooter_pos)
 	
 	local sniper_rule		= 0
+	
+	k_ap = k_ap * 10
 
 	----------------------------------------------------------
 	local kind				= ini_sys:r_string_ex(sec, "kind")
