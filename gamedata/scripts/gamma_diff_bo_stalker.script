@@ -251,7 +251,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	local kind				= ini_sys:r_string_ex(sec, "kind")
 	local k_mod				= 4.5
 	
-	k_ap = k_ap * 10
+	k_ap = (k_ap and k_ap or 0) * 10
 
 	if kind == "w_sniper" then
 		k_mod 				= 9.0
