@@ -64,9 +64,9 @@ npc_last = {}
 difficulty_multiplier =
 {
 	[1] = 1.3,
-	[2] = 1.15,
-	[3] = 1.0,
-	[4] = 0.9,
+	[2] = 1.05,
+	[3] = 0.9,
+	[4] = 0.8,
 }
 
 -- This won't need any customization since every human is still a human.
@@ -245,6 +245,8 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	local se_obj 			= alife_object(npc:id())
 	local faction 			= se_obj:community()
 	local npc_sec 			= "gbo_" .. npc:section()
+
+	local hit_power 		= game_difficulties.get_game_factor("hit_power") and game_difficulties.get_game_factor("hit_power") or 1
 	
 	local barrel_condition_corrected = get_Barrel(wpn)
 
@@ -550,6 +552,10 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	trace('Difficulty multiplier: %s', difficulty_multiplier[game_num])
 	
 	shit.power = shit.power * difficulty_multiplier[game_num]
+
+	if shit.type == hit.fire_wound then
+		shit.power = shit.power * hit_power
+	end
 	
 	life_remove = shit.power
 
