@@ -582,12 +582,12 @@ function shit_booster(shit, bone_id, k_ap)
 	end
 	
 	if shit.type == hit.radiation then
-		if shit.draftsman == db.actor then
+		if self_inflicted == 1 then
 			db.actor:change_radiation(damage)
 		else
 			local dice = math.ceil((total_prot - 50) / 2)
 			if dice > 0 then
-				if math.random(1, 100) > dice then
+				if math.random(100) > dice then
 					db.actor:change_radiation(damage * 2.0)
 				end
 			else
