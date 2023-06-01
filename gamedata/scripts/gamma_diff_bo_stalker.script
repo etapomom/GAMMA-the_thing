@@ -575,7 +575,7 @@ function npc_on_before_hit(npc, shit, bone_id, flags)
 	
 	trace("Final damage: [" .. life_remove .. "]")
 
-	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage from %s meters (%sx // %sx). (%s -> %s)', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], tn(life_remove), tn(dist), tn(1 / f_dist), tn(1 / (f_dist / 1.5)), tn(old_health), tn(npc.health))
+	combat_log('%s || Struck %s (%s) with %s (%s) in the %s for %s damage from %s meters (%sx // %sx). (%s -> %s)', time_global(), npc:section(), npc:id(), sec, ammo_section, hitboxes[bone_id], tn(life_remove), tn(dist), max(tn(1 / f_dist), 1.0), max(tn(1 / (f_dist / 1.5)), 1.0), tn(old_health), tn(npc.health))
 	
 	shit.power = 0.0001
 	life_remove = nil
